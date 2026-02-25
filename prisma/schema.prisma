@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  dropzones     Dropzone[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Dropzone {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  ownerId     String
+  isPublic    Boolean  @default(true)
+
+  // Location
+  lat         Float
+  lon         Float
+
+  // METAR
+  metarStationIds String[] @default(["KENW"])
+
+  // ADS-B
+  adsbPrimaryUrl   String?
+  adsbFallbackUrl  String?
+
+  // Jump profile
+  exitAltitudeFt        Int @default(14000)
+  openingAltitudeFt     Int @default(4000)
+  holdingAreaAltitudeFt Int @default(2500)
+  patternAltitudeFt     Int @default(1000)
+  jumpRunAirspeedKnots  Int @default(90)
+
+  // Jump planes
+  jumpPlanes JumpPlane[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JumpPlane {
+  id         String   @id @default(cuid())
+  dropzone   Dropzone @relation(fields: [dropzoneId], references: [id], onDelete: Cascade)
+  dropzoneId String
+  hexCode    String   // ICAO 24-bit hex (lowercase)
+  tailNumber String?
+}
