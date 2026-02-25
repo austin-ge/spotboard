@@ -1,10 +1,10 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -13,6 +13,7 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
+  password      String?
   accounts      Account[]
   sessions      Session[]
   dropzones     Dropzone[]
@@ -66,8 +67,8 @@ model Dropzone {
   lat         Float
   lon         Float
 
-  // METAR
-  metarStationIds String[] @default(["KENW"])
+  // Airport
+  airportCode String?
 
   // ADS-B
   adsbPrimaryUrl   String?

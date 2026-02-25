@@ -1,23 +1,43 @@
 import { notFound } from "next/navigation";
-import { PrismaClient } from "@prisma/client";
+import type { Metadata } from "next";
+import { prisma } from "@/lib/db";
+import DZPageClient from "./DZPageClient";
 
-const prisma = new PrismaClient();
+interface Props {
+  params: Promise<{ slug: string }>;
+}
 
-export default async function DZPage({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const dz = await prisma.dropzone.findUnique({
+    where: { slug },
+    select: { name: true },
+  });
+
+  return {
+    title: dz ? `${dz.name} — Spotboard` : "Dropzone — Spotboard",
+    description: dz
+      ? `Live winds and jump run for ${dz.name}`
+      : "Skydiving dropzone board",
+  };
+}
+
+export default async function DZPage({ params }: Props) {
   const { slug } = await params;
   const dz = await prisma.dropzone.findUnique({ where: { slug } });
   if (!dz) notFound();
 
   return (
-    <div className="flex h-screen">
-      <div className="w-96 bg-white border-r border-gray-200 p-6 overflow-y-auto">
-        <h1 className="text-xl font-bold mb-1">{dz.name}</h1>
-        <p className="text-sm text-gray-500 mb-6">{dz.lat.toFixed(4)}, {dz.lon.toFixed(4)}</p>
-        <p className="text-sm text-gray-400">Winds data coming soon...</p>
-      </div>
-      <div className="flex-1 bg-gray-100 flex items-center justify-center">
-        <p className="text-gray-400">Map (Mapbox token required)</p>
-      </div>
-    </div>
+    <DZPageClient
+      name={dz.name}
+      slug={dz.slug}
+      lat={dz.lat}
+      lon={dz.lon}
+      exitAltitudeFt={dz.exitAltitudeFt}
+      openingAltitudeFt={dz.openingAltitudeFt}
+      holdingAreaAltitudeFt={dz.holdingAreaAltitudeFt}
+      patternAltitudeFt={dz.patternAltitudeFt}
+      jumpRunAirspeedKnots={dz.jumpRunAirspeedKnots}
+    />
   );
 }

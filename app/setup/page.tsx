@@ -1,8 +1,20 @@
-export default function SetupPage() {
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import SetupForm from "@/components/dz/SetupForm";
+
+export default async function SetupPage() {
+  const session = await auth();
+  if (!session) redirect("/login");
+
   return (
-    <main className="max-w-2xl mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-2">Set up your dropzone</h1>
-      <p className="text-gray-500">DZ setup wizard coming soon.</p>
+    <main className="flex min-h-screen items-center justify-center p-8">
+      <div className="w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-1">Create a Dropzone</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Set up your DZ board in a few steps.
+        </p>
+        <SetupForm />
+      </div>
     </main>
   );
 }
