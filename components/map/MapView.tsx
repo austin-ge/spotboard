@@ -11,9 +11,10 @@ interface MapViewProps {
   lat: number;
   lon: number;
   jumpRun: JumpRunResult | null;
+  jumpRunLengthMiles?: number;
 }
 
-export default function MapView({ lat, lon, jumpRun }: MapViewProps) {
+export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
 
@@ -87,8 +88,9 @@ export default function MapView({ lat, lon, jumpRun }: MapViewProps) {
         source: "jump-run-arrow",
         layout: {
           "icon-image": "airport",
-          "icon-size": 1.2,
+          "icon-size": 1.5,
           "icon-rotate": ["get", "bearing"],
+          "icon-rotation-alignment": "map",
           "icon-allow-overlap": true,
         },
         paint: {
@@ -117,25 +119,24 @@ export default function MapView({ lat, lon, jumpRun }: MapViewProps) {
       ) as mapboxgl.GeoJSONSource;
       if (!source) return;
 
-      // Line from offset point through DZ, total length = offset + jump run
-      const bearing = jumpRun!.headingDeg;
-      const oppBearing = (bearing + 180) % 360;
+      const heading = jumpRun!.headingDeg;
 
-      // Start point: upwind of DZ by offset + half run length
-      const startDist = Math.abs(jumpRun!.offsetMiles) + JUMP_RUN_LENGTH_MILES;
-      const [startLat, startLon] = destinationPoint(
+      // Spot = green light point, upwind of DZ by offsetMiles
+      // Aircraft flies INTO the wind (heading), so spot is upwind of DZ
+      const [spotLat, spotLon] = destinationPoint(
         lat,
         lon,
-        bearing,
-        startDist
+        heading,
+        jumpRun!.offsetMiles
       );
 
-      // End point: downwind by half run length
+      // Line starts at spot, extends along the aircraft's direction of travel
+      const lineLength = jumpRunLengthMiles ?? JUMP_RUN_LENGTH_MILES;
       const [endLat, endLon] = destinationPoint(
-        lat,
-        lon,
-        oppBearing,
-        JUMP_RUN_LENGTH_MILES
+        spotLat,
+        spotLon,
+        heading,
+        lineLength
       );
 
       source.setData({
@@ -144,19 +145,20 @@ export default function MapView({ lat, lon, jumpRun }: MapViewProps) {
         geometry: {
           type: "LineString",
           coordinates: [
-            [startLon, startLat],
+            [spotLon, spotLat],
             [endLon, endLat],
           ],
         },
       });
 
+      // Plane icon at the end of the run, oriented along the heading
       if (arrowSource) {
         arrowSource.setData({
           type: "Feature",
-          properties: { bearing: bearing - 90 },
+          properties: { bearing: heading },
           geometry: {
             type: "Point",
-            coordinates: [startLon, startLat],
+            coordinates: [endLon, endLat],
           },
         });
       }

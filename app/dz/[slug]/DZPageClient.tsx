@@ -6,38 +6,25 @@ import { useJumpRun } from "@/lib/hooks/useJumpRun";
 import Sidebar from "@/components/dz/Sidebar";
 import MapView from "@/components/map/MapView";
 import MobileToggle from "@/components/dz/MobileToggle";
+import type { DropzoneConfig } from "@/lib/winds/types";
 
 interface DZPageClientProps {
   name: string;
   slug: string;
   lat: number;
   lon: number;
-  exitAltitudeFt: number;
-  openingAltitudeFt: number;
-  holdingAreaAltitudeFt: number;
-  patternAltitudeFt: number;
-  jumpRunAirspeedKnots: number;
+  config: DropzoneConfig;
 }
 
 export default function DZPageClient({
   name,
   lat,
   lon,
-  exitAltitudeFt,
-  openingAltitudeFt,
-  holdingAreaAltitudeFt,
-  patternAltitudeFt,
-  jumpRunAirspeedKnots,
+  config,
 }: DZPageClientProps) {
   const [showMap, setShowMap] = useState(false);
   const { winds, loading, error } = useWinds(lat, lon);
-  const jumpRun = useJumpRun(winds?.layers ?? null, {
-    exitAltitudeFt,
-    openingAltitudeFt,
-    holdingAreaAltitudeFt,
-    patternAltitudeFt,
-    jumpRunAirspeedKnots,
-  });
+  const jumpRun = useJumpRun(winds?.layers ?? null, config);
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
@@ -63,7 +50,12 @@ export default function DZPageClient({
       <div
         className={`flex-1 md:block ${showMap ? "block" : "hidden md:block"}`}
       >
-        <MapView lat={lat} lon={lon} jumpRun={jumpRun} />
+        <MapView
+          lat={lat}
+          lon={lon}
+          jumpRun={jumpRun}
+          jumpRunLengthMiles={config.drift.jumpRunLengthMiles}
+        />
       </div>
 
       {/* Mobile toggle */}

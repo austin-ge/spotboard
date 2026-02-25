@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
+import { buildDropzoneConfig } from "@/lib/winds/config";
 import DZPageClient from "./DZPageClient";
 
 interface Props {
@@ -27,17 +28,15 @@ export default async function DZPage({ params }: Props) {
   const dz = await prisma.dropzone.findUnique({ where: { slug } });
   if (!dz) notFound();
 
+  const config = buildDropzoneConfig(dz);
+
   return (
     <DZPageClient
       name={dz.name}
       slug={dz.slug}
       lat={dz.lat}
       lon={dz.lon}
-      exitAltitudeFt={dz.exitAltitudeFt}
-      openingAltitudeFt={dz.openingAltitudeFt}
-      holdingAreaAltitudeFt={dz.holdingAreaAltitudeFt}
-      patternAltitudeFt={dz.patternAltitudeFt}
-      jumpRunAirspeedKnots={dz.jumpRunAirspeedKnots}
+      config={config}
     />
   );
 }

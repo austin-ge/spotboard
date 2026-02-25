@@ -9,6 +9,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (session.user.role !== "OPERATOR" && session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Only DZ operators can create dropzones" }, { status: 403 });
+  }
+
   const body = await req.json();
   const { name, slug: customSlug, lat, lon, airportCode } = body;
 

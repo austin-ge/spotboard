@@ -1,11 +1,13 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 export default function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("invite");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,10 +43,31 @@ export default function SignupForm() {
 
     if (signInRes?.error) {
       setError("Account created but could not sign in. Try logging in.");
-    } else {
-      router.push("/");
-      router.refresh();
+      return;
     }
+
+    // If there's an invite token, redirect to accept it
+    if (inviteToken) {
+      router.push(`/invite/${inviteToken}`);
+      return;
+    }
+
+    // Check for domain-based DZ claim match
+    try {
+      const claimRes = await fetch("/api/claim/check", { method: "POST" });
+      if (claimRes.ok) {
+        const { matches } = await claimRes.json();
+        if (matches && matches.length > 0) {
+          router.push("/claim");
+          return;
+        }
+      }
+    } catch {
+      // Claim check failed — not critical, continue
+    }
+
+    router.push("/");
+    router.refresh();
   }
 
   return (
@@ -55,6 +78,7 @@ export default function SignupForm() {
             {error}
           </div>
         )}
+
         <div>
           <label htmlFor="name" className="block text-sm font-medium mb-1">
             Name
@@ -117,13 +141,21 @@ export default function SignupForm() {
 
       <div className="grid grid-cols-2 gap-3">
         <button
-          onClick={() => signIn("google", { callbackUrl: "/" })}
+          onClick={() =>
+            signIn("google", {
+              callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/",
+            })
+          }
           className="flex items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
         >
           Google
         </button>
         <button
-          onClick={() => signIn("github", { callbackUrl: "/" })}
+          onClick={() =>
+            signIn("github", {
+              callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/",
+            })
+          }
           className="flex items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
         >
           GitHub

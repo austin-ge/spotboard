@@ -1,14 +1,6 @@
-import { WindLayer, JumpProfile, JumpRunResult } from "./types";
-import {
-  KTS_TO_MPH,
-  CANOPY_FORWARD_SPEED_MPH,
-  CANOPY_DESCENT_RATE_MPH,
-  FREEFALL_TERMINAL_VELOCITY_MPH,
-  LIGHT_TO_DOOR_MILES,
-  AIRPLANE_DRIFT_MILES,
-  MAX_OFFSET_MILES,
-  SEPARATION_TABLE,
-} from "./constants";
+import type { WindLayer, JumpRunResult, DropzoneConfig, DriftParams, HeadingConfig } from "./types";
+import { KTS_TO_MPH } from "./constants";
+import { DEFAULT_DROPZONE_CONFIG } from "./constants";
 
 /**
  * Get wind at a specific altitude by nearest-neighbor lookup
@@ -27,10 +19,18 @@ function windAt(layers: WindLayer[], altFt: number): WindLayer {
 }
 
 /**
+ * Smallest signed angle difference (−180 to +180)
+ */
+function angleDiff(a: number, b: number): number {
+  let d = ((b - a + 540) % 360) - 180;
+  return d;
+}
+
+/**
  * Calculate jump run heading using speed-weighted vector average of winds at 5k-14k ft.
  * Returns heading INTO the wind (aircraft heading).
  */
-export function calculateHeading(layers: WindLayer[]): number {
+export function calculateAutoHeading(layers: WindLayer[]): number {
   let uSum = 0;
   let vSum = 0;
   let weightSum = 0;
@@ -57,21 +57,59 @@ export function calculateHeading(layers: WindLayer[]): number {
 }
 
 /**
+ * Pick which runway heading is most into the wind.
+ */
+export function calculateRunwayHeading(
+  layers: WindLayer[],
+  rwy1Deg: number,
+  rwy2Deg: number
+): number {
+  const autoHeading = calculateAutoHeading(layers);
+  const diff1 = Math.abs(angleDiff(autoHeading, rwy1Deg));
+  const diff2 = Math.abs(angleDiff(autoHeading, rwy2Deg));
+  return diff1 <= diff2 ? rwy1Deg : rwy2Deg;
+}
+
+/**
+ * Dispatch heading calculation based on mode.
+ */
+export function resolveHeading(
+  layers: WindLayer[],
+  config: HeadingConfig
+): number {
+  switch (config.mode) {
+    case "RUNWAY":
+      if (config.runwayHeading1Deg != null && config.runwayHeading2Deg != null) {
+        return calculateRunwayHeading(layers, config.runwayHeading1Deg, config.runwayHeading2Deg);
+      }
+      return calculateAutoHeading(layers);
+    case "FIXED":
+      if (config.fixedHeadingDeg != null) {
+        return config.fixedHeadingDeg;
+      }
+      return calculateAutoHeading(layers);
+    case "AUTO":
+    default:
+      return calculateAutoHeading(layers);
+  }
+}
+
+/**
  * Calculate offset in miles from DZ center.
  * Positive = upwind. Based on original computeOffsetMiles.
  */
 export function calculateOffset(
   layers: WindLayer[],
   headingDeg: number,
-  profile: JumpProfile
+  profile: DropzoneConfig["profile"],
+  drift: DriftParams
 ): number {
   const headingRad = (headingDeg * Math.PI) / 180;
 
   // 1. Canopy drift: opening alt → holding area alt
-  // Layer-by-layer wind integration
   let canopyDriftMiles = 0;
   const canopyAltRange = profile.openingAltitudeFt - profile.holdingAreaAltitudeFt;
-  const canopyTimeMins = canopyAltRange / (CANOPY_DESCENT_RATE_MPH * 5280 / 60);
+  const canopyTimeMins = canopyAltRange / (drift.canopyDescentRateMph * 5280 / 60);
 
   for (const layer of layers) {
     if (
@@ -82,28 +120,21 @@ export function calculateOffset(
 
     const windSpeedMph = layer.speedKts * KTS_TO_MPH;
     const windDirRad = (layer.directionDeg * Math.PI) / 180;
-
-    // Wind component along jump run heading (positive = headwind)
-    const component =
-      windSpeedMph *
-      Math.cos(windDirRad - headingRad);
-
-    // Time spent in this layer (proportional)
+    const component = windSpeedMph * Math.cos(windDirRad - headingRad);
     const layerFraction = 1000 / canopyAltRange;
     const layerTimeHrs = (canopyTimeMins * layerFraction) / 60;
-
     canopyDriftMiles += component * layerTimeHrs;
   }
 
   // 2. Opening point offset — canopy flies upwind at forward speed
   const openingTimeHrs =
     (profile.openingAltitudeFt - profile.holdingAreaAltitudeFt) /
-    (CANOPY_DESCENT_RATE_MPH * 5280) * 60 / 60;
-  const openingOffsetMiles = CANOPY_FORWARD_SPEED_MPH * openingTimeHrs;
+    (drift.canopyDescentRateMph * 5280) * 60 / 60;
+  const openingOffsetMiles = drift.canopyForwardSpeedMph * openingTimeHrs;
 
   // 3. Freefall drift: exit alt → opening alt
   const freefallAltRange = profile.exitAltitudeFt - profile.openingAltitudeFt;
-  const freefallTimeHrs = freefallAltRange / (FREEFALL_TERMINAL_VELOCITY_MPH * 5280) * 60 / 60;
+  const freefallTimeHrs = freefallAltRange / (drift.freefallTerminalVelocityMph * 5280) * 60 / 60;
 
   let freefallDriftMiles = 0;
   for (const layer of layers) {
@@ -123,10 +154,9 @@ export function calculateOffset(
   // 4. Total offset
   const totalOffset =
     canopyDriftMiles + openingOffsetMiles + freefallDriftMiles +
-    LIGHT_TO_DOOR_MILES + AIRPLANE_DRIFT_MILES;
+    drift.lightToDoorMiles + drift.airplaneDriftMiles;
 
-  // Clamp
-  return Math.max(-MAX_OFFSET_MILES, Math.min(MAX_OFFSET_MILES, totalOffset));
+  return Math.max(-drift.maxOffsetMiles, Math.min(drift.maxOffsetMiles, totalOffset));
 }
 
 /**
@@ -137,46 +167,45 @@ export function calculateGroundSpeed(
   headingDeg: number,
   airspeedKts: number
 ): number {
-  // Use winds at typical jump run altitude (~12k ft)
   const wind = windAt(layers, 12000);
   const headingRad = (headingDeg * Math.PI) / 180;
   const windDirRad = (wind.directionDeg * Math.PI) / 180;
-
-  // Headwind component (positive = headwind, reduces ground speed)
   const headwindKts = wind.speedKts * Math.cos(windDirRad - headingRad);
-
-  // Ground speed = airspeed - headwind
   return Math.max(0, Math.round(airspeedKts - headwindKts));
 }
 
 /**
- * Look up exit separation time from ground speed
+ * Look up exit separation time from ground speed using a separation table
  */
-export function calculateSeparation(groundSpeedKts: number): number {
-  for (const [speed, seconds] of SEPARATION_TABLE) {
+export function calculateSeparation(
+  groundSpeedKts: number,
+  table: [number, number][]
+): number {
+  for (const [speed, seconds] of table) {
     if (groundSpeedKts >= speed) return seconds;
   }
-  return SEPARATION_TABLE[SEPARATION_TABLE.length - 1][1];
+  return table[table.length - 1][1];
 }
 
 /**
- * Compute full jump run from wind data and profile
+ * Compute full jump run from wind data and dropzone config
  */
 export function computeJumpRun(
   layers: WindLayer[],
-  profile: JumpProfile
+  config: DropzoneConfig = DEFAULT_DROPZONE_CONFIG
 ): JumpRunResult {
-  const headingDeg = calculateHeading(layers);
-  const offsetMiles = calculateOffset(layers, headingDeg, profile);
+  const headingDeg = resolveHeading(layers, config.heading);
+  const offsetMiles = calculateOffset(layers, headingDeg, config.profile, config.drift);
   const groundSpeedKts = calculateGroundSpeed(
     layers,
     headingDeg,
-    profile.jumpRunAirspeedKnots
+    config.profile.jumpRunAirspeedKnots
   );
-  const separationSeconds = calculateSeparation(groundSpeedKts);
+  const separationSeconds = calculateSeparation(groundSpeedKts, config.separationTable);
 
   return {
     headingDeg,
+    headingMode: config.heading.mode,
     offsetMiles: Math.round(offsetMiles * 100) / 100,
     groundSpeedKts,
     separationSeconds,

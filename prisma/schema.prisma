@@ -7,6 +7,35 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  JUMPER
+  STAFF
+  OPERATOR
+  ADMIN
+}
+
+enum InviteRole {
+  MANAGER
+  STAFF
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ClaimType {
+  OPERATOR
+  STAFF
+}
+
+enum HeadingMode {
+  AUTO
+  RUNWAY
+  FIXED
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -14,9 +43,13 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  role          UserRole  @default(JUMPER)
   accounts      Account[]
   sessions      Session[]
   dropzones     Dropzone[]
+  managedDZs    DropzoneManager[]
+  staffAt       DropzoneStaff[]
+  claims        DropzoneClaim[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -62,6 +95,8 @@ model Dropzone {
   owner       User     @relation(fields: [ownerId], references: [id])
   ownerId     String
   isPublic    Boolean  @default(true)
+  website     String?
+  verifiedDomains String[] @default([])
 
   // Location
   lat         Float
@@ -81,8 +116,36 @@ model Dropzone {
   patternAltitudeFt     Int @default(1000)
   jumpRunAirspeedKnots  Int @default(90)
 
+  // Heading
+  headingMode        HeadingMode @default(AUTO)
+  fixedHeadingDeg    Int?
+  runwayHeading1Deg  Int?
+  runwayHeading2Deg  Int?
+
+  // Drift parameters
+  canopyForwardSpeedMph         Float?
+  canopyDescentRateMph          Float?
+  freefallTerminalVelocityMph   Float?
+  lightToDoorMiles              Float?
+  airplaneDriftMiles            Float?
+  maxOffsetMiles                Float?
+  jumpRunLengthMiles            Float?
+
+  // Airplane
+  aircraftName          String?
+  aircraftCruiseSpeedKts Int?
+
+  // Separation
+  separationTableJson   Json?
+
   // Jump planes
   jumpPlanes JumpPlane[]
+
+  // Team
+  managers DropzoneManager[]
+  staff    DropzoneStaff[]
+  claims   DropzoneClaim[]
+  invites  DropzoneInvite[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,4 +157,52 @@ model JumpPlane {
   dropzoneId String
   hexCode    String   // ICAO 24-bit hex (lowercase)
   tailNumber String?
+}
+
+model DropzoneManager {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  dropzone   Dropzone @relation(fields: [dropzoneId], references: [id], onDelete: Cascade)
+  dropzoneId String
+  createdAt  DateTime @default(now())
+  @@unique([userId, dropzoneId])
+}
+
+model DropzoneStaff {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  dropzone   Dropzone @relation(fields: [dropzoneId], references: [id], onDelete: Cascade)
+  dropzoneId String
+  createdAt  DateTime @default(now())
+  @@unique([userId, dropzoneId])
+}
+
+model DropzoneInvite {
+  id         String     @id @default(cuid())
+  dropzone   Dropzone   @relation(fields: [dropzoneId], references: [id], onDelete: Cascade)
+  dropzoneId String
+  email      String?
+  token      String     @unique @default(cuid())
+  role       InviteRole
+  used       Boolean    @default(false)
+  usedBy     String?
+  createdAt  DateTime   @default(now())
+  expiresAt  DateTime
+}
+
+model DropzoneClaim {
+  id          String      @id @default(cuid())
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  dropzone    Dropzone    @relation(fields: [dropzoneId], references: [id], onDelete: Cascade)
+  dropzoneId  String
+  claimType   ClaimType
+  status      ClaimStatus @default(PENDING)
+  emailDomain String
+  createdAt   DateTime    @default(now())
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  @@unique([userId, dropzoneId])
 }

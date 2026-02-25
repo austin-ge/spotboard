@@ -53,3 +53,27 @@ export const SEPARATION_TABLE: [number, number][] = [
   [30, 22],
   [20, 30],
 ];
+
+// Default configs for DropzoneConfig
+import type { HeadingConfig, DriftParams, DropzoneConfig } from "./types";
+
+export const DEFAULT_HEADING_CONFIG: HeadingConfig = {
+  mode: "AUTO",
+};
+
+export const DEFAULT_DRIFT_PARAMS: DriftParams = {
+  canopyForwardSpeedMph: CANOPY_FORWARD_SPEED_MPH,
+  canopyDescentRateMph: CANOPY_DESCENT_RATE_MPH,
+  freefallTerminalVelocityMph: FREEFALL_TERMINAL_VELOCITY_MPH,
+  lightToDoorMiles: LIGHT_TO_DOOR_MILES,
+  airplaneDriftMiles: AIRPLANE_DRIFT_MILES,
+  maxOffsetMiles: MAX_OFFSET_MILES,
+  jumpRunLengthMiles: JUMP_RUN_LENGTH_MILES,
+};
+
+export const DEFAULT_DROPZONE_CONFIG: DropzoneConfig = {
+  profile: DEFAULT_JUMP_PROFILE,
+  heading: DEFAULT_HEADING_CONFIG,
+  drift: DEFAULT_DRIFT_PARAMS,
+  separationTable: SEPARATION_TABLE,
+};

@@ -34,6 +34,7 @@ export async function POST(req: Request) {
       name: name || null,
       email,
       password: hashed,
+      role: "JUMPER",
     },
   });
 

@@ -30,6 +30,11 @@ export default function JumpRunCard({ jumpRun }: JumpRunCardProps) {
         <div>
           <div className="text-2xl font-bold tabular-nums">
             {jumpRun.headingDeg}°
+            {jumpRun.headingMode !== "AUTO" && (
+              <span className="ml-1.5 inline-block align-middle rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600 uppercase">
+                {jumpRun.headingMode === "RUNWAY" ? "RWY" : "FXD"}
+              </span>
+            )}
           </div>
           <div className="text-xs text-gray-500">
             Heading ({headingLabel(jumpRun.headingDeg)})
