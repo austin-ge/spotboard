@@ -14,13 +14,16 @@ interface DZPageClientProps {
   lat: number;
   lon: number;
   config: DropzoneConfig;
+  showSettings: boolean;
 }
 
 export default function DZPageClient({
   name,
+  slug,
   lat,
   lon,
   config,
+  showSettings,
 }: DZPageClientProps) {
   const [showMap, setShowMap] = useState(false);
   const { winds, loading, error } = useWinds(lat, lon);
@@ -36,6 +39,7 @@ export default function DZPageClient({
       >
         <Sidebar
           dzName={name}
+          slug={slug}
           lat={lat}
           lon={lon}
           layers={winds?.layers ?? null}
@@ -43,6 +47,7 @@ export default function DZPageClient({
           fetchedAt={winds?.fetchedAt ?? null}
           loading={loading}
           error={error}
+          showSettings={showSettings}
         />
       </div>
 

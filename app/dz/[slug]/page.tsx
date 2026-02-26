@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
+import { canEditDZ } from "@/lib/permissions";
 import { buildDropzoneConfig } from "@/lib/winds/config";
 import DZPageClient from "./DZPageClient";
 
@@ -30,6 +32,11 @@ export default async function DZPage({ params }: Props) {
 
   const config = buildDropzoneConfig(dz);
 
+  const session = await auth();
+  const showSettings = session?.user
+    ? await canEditDZ(session.user, dz.id)
+    : false;
+
   return (
     <DZPageClient
       name={dz.name}
@@ -37,6 +44,7 @@ export default async function DZPage({ params }: Props) {
       lat={dz.lat}
       lon={dz.lon}
       config={config}
+      showSettings={showSettings}
     />
   );
 }
