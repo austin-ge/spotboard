@@ -2,8 +2,6 @@
 
 import type { WindLayer } from "@/lib/winds/types";
 import {
-  getWindArrow,
-  getWindCardinal,
   getWindSpeedColor,
   groupWindsByRange,
 } from "@/lib/winds/display";
@@ -18,11 +16,33 @@ function formatAltitude(ft: number): string {
   return `${ft}`;
 }
 
+function WindArrow({ directionDeg, color }: { directionDeg: number; color: string }) {
+  const rotation = directionDeg;
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      className="flex-shrink-0"
+      style={{ transform: `rotate(${rotation}deg)` }}
+    >
+      <path
+        d="M12 2 L12 22 M12 22 L7 17 M12 22 L17 17"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
 export default function WindsTable({ layers }: WindsTableProps) {
   if (!layers) {
     return (
-      <div className="text-sm text-gray-400 py-4 text-center">
-        Loading wind data...
+      <div className="py-8 text-center">
+        <p className="text-sm text-slate-600">Loading wind data...</p>
       </div>
     );
   }
@@ -30,8 +50,8 @@ export default function WindsTable({ layers }: WindsTableProps) {
   const groups = groupWindsByRange(layers);
 
   return (
-    <div className="space-y-1">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+    <div className="space-y-3">
+      <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
         Winds Aloft
       </h3>
 
@@ -46,33 +66,32 @@ export default function WindsTable({ layers }: WindsTableProps) {
           return (
             <div
               key={i}
-              className="flex items-center gap-2 rounded px-2 py-1.5 text-sm"
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 hover:bg-white/[0.03] transition-colors"
             >
-              <span className="w-16 text-xs text-gray-500 font-mono text-right">
+              <span className="w-14 text-xs font-mono text-slate-500 text-right tabular-nums">
                 {altLabel}
               </span>
 
-              <span className="text-lg leading-none" style={{ color }}>
-                {getWindArrow(g.directionDeg)}
+              <WindArrow directionDeg={g.directionDeg} color={color} />
+
+              <span className="w-8 text-xs font-mono text-slate-600 tabular-nums">
+                {g.directionDeg}&deg;
               </span>
 
-              <span className="w-8 text-xs text-gray-400">
-                {getWindCardinal(g.directionDeg)}
-              </span>
-
-              <div className="flex-1 flex items-center gap-2">
+              <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                 <div
-                  className="h-1.5 rounded-full"
+                  className="h-full rounded-full transition-all duration-300"
                   style={{
                     width: `${Math.min(100, (g.speedKts / 40) * 100)}%`,
                     backgroundColor: color,
+                    boxShadow: g.speedKts > 5 ? `0 0 8px ${color}50` : "none",
                     minWidth: g.speedKts > 0 ? "4px" : "0",
                   }}
                 />
               </div>
 
               <span
-                className="text-sm font-semibold tabular-nums w-12 text-right"
+                className="w-12 text-sm font-mono font-semibold tabular-nums text-right"
                 style={{ color }}
               >
                 {g.speedKts} kt

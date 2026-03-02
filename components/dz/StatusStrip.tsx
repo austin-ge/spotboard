@@ -34,23 +34,23 @@ export default function StatusStrip({
   return (
     <div className="flex items-center gap-2 text-xs">
       <span
-        className={`inline-block w-2 h-2 rounded-full ${
+        className={`inline-block w-1.5 h-1.5 rounded-full ${
           error
-            ? "bg-red-400"
+            ? "bg-red-400 led-glow text-red-400"
             : loading
-            ? "bg-yellow-400 animate-pulse"
+            ? "bg-amber-400 animate-pulse"
             : fresh
-            ? "bg-green-400"
-            : "bg-gray-300"
+            ? "bg-emerald-400 led-glow text-emerald-400"
+            : "bg-slate-600"
         }`}
       />
-      <span className="text-gray-500">
+      <span className="text-slate-500">
         {error
           ? "Wind data error"
           : loading
           ? "Fetching winds..."
           : fetchedAt
-          ? `Winds updated ${timeAgo(fetchedAt, now)}`
+          ? `Updated ${timeAgo(fetchedAt, now)}`
           : "No wind data"}
       </span>
     </div>

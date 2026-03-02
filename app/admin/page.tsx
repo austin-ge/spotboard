@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import AdminPanel from "@/components/admin/AdminPanel";
 
-const BOOTSTRAP_EMAILS = ["austin@spotboard.xyz"];
+const BOOTSTRAP_EMAILS = ["austin@spotboard.xyz", "austin@skydivemidwest.com"];
 
 export default async function AdminPage() {
   const session = await auth();

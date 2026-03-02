@@ -34,19 +34,19 @@ export function getWindSpeedClass(
 }
 
 /**
- * Color for wind speed
+ * Color for wind speed — tuned for dark panel backgrounds
  */
 export function getWindSpeedColor(speedKts: number): string {
   const cls = getWindSpeedClass(speedKts);
   switch (cls) {
     case "calm":
-      return "#9ca3af"; // gray
+      return "#64748b"; // slate-500
     case "light":
-      return "#22c55e"; // green
+      return "#34d399"; // emerald-400
     case "moderate":
-      return "#eab308"; // yellow
+      return "#fbbf24"; // amber-400
     case "strong":
-      return "#ef4444"; // red
+      return "#f87171"; // red-400
   }
 }
 

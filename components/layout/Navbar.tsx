@@ -9,7 +9,7 @@ export default function Navbar() {
   const role = session?.user?.role;
 
   return (
-    <nav className="h-14 border-b border-gray-200 bg-white flex items-center px-4 gap-4">
+    <nav className="h-14 bg-white/80 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center px-4 gap-4">
       <Link href="/" className="font-bold text-lg tracking-tight">
         Spotboard
       </Link>

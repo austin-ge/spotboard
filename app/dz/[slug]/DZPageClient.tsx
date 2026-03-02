@@ -7,6 +7,7 @@ import Sidebar from "@/components/dz/Sidebar";
 import MapView from "@/components/map/MapView";
 import MobileToggle from "@/components/dz/MobileToggle";
 import type { DropzoneConfig } from "@/lib/winds/types";
+import type { MapZonesData } from "@/lib/mapZones";
 
 interface DZPageClientProps {
   name: string;
@@ -15,6 +16,8 @@ interface DZPageClientProps {
   lon: number;
   config: DropzoneConfig;
   showSettings: boolean;
+  mapZones: MapZonesData;
+  mapStyle: string;
 }
 
 export default function DZPageClient({
@@ -24,6 +27,8 @@ export default function DZPageClient({
   lon,
   config,
   showSettings,
+  mapZones,
+  mapStyle,
 }: DZPageClientProps) {
   const [showMap, setShowMap] = useState(false);
   const { winds, loading, error } = useWinds(lat, lon);
@@ -60,6 +65,8 @@ export default function DZPageClient({
           lon={lon}
           jumpRun={jumpRun}
           jumpRunLengthMiles={config.drift.jumpRunLengthMiles}
+          mapZones={mapZones}
+          mapStyle={mapStyle}
         />
       </div>
 

@@ -59,6 +59,8 @@ export default async function SettingsPage({ params }: Props) {
           aircraftName: dz.aircraftName,
           aircraftCruiseSpeedKts: dz.aircraftCruiseSpeedKts,
           separationTableJson: dz.separationTableJson as [number, number][] | null,
+          mapZonesJson: dz.mapZonesJson,
+          mapStyle: dz.mapStyle,
         }}
       />
     </main>

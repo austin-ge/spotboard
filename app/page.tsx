@@ -16,23 +16,31 @@ export default async function HomePage() {
   });
 
   return (
-    <main className="min-h-screen">
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Spotboard</h1>
-          <p className="text-gray-500">
-            Community skydiving winds &amp; spotting tool.
-          </p>
-        </div>
+    <main className="min-h-screen bg-[#f0f2f7]">
+      {/* Hero */}
+      <div className="max-w-5xl mx-auto px-6 pt-14 pb-8">
+        <h1 className="text-4xl font-bold tracking-tight text-slate-900">
+          Spotboard
+        </h1>
+        <p className="text-slate-400 mt-1.5">
+          Live winds &amp; spotting for{" "}
+          <span className="text-slate-600 font-medium">
+            {dropzones.length}
+          </span>{" "}
+          dropzones
+        </p>
+      </div>
 
+      {/* Directory */}
+      <div className="max-w-5xl mx-auto px-6 pb-16">
         {dropzones.length > 0 ? (
           <DirectorySearch dropzones={dropzones} />
         ) : (
-          <div className="text-center py-16 text-gray-400">
-            <p className="mb-4">No dropzones yet.</p>
+          <div className="rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] text-center py-16 px-8">
+            <p className="text-slate-400 mb-5">No dropzones yet.</p>
             <Link
               href="/setup"
-              className="inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="inline-block rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors shadow-[0_2px_8px_rgba(79,70,229,0.3)]"
             >
               Create the first one
             </Link>

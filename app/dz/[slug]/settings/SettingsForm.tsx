@@ -12,6 +12,10 @@ import {
   JUMP_RUN_LENGTH_MILES,
   SEPARATION_TABLE,
 } from "@/lib/winds/constants";
+import { parseMapZones } from "@/lib/mapZones";
+import type { MapZonesData } from "@/lib/mapZones";
+import ZoneEditor from "@/components/map/ZoneEditor";
+import { MAP_STYLES, type MapStyleKey } from "@/lib/mapStyles";
 
 type HeadingMode = "AUTO" | "RUNWAY" | "FIXED";
 
@@ -39,6 +43,8 @@ interface SettingsData {
   aircraftName: string | null;
   aircraftCruiseSpeedKts: number | null;
   separationTableJson: [number, number][] | null;
+  mapZonesJson: unknown;
+  mapStyle: string;
 }
 
 interface SettingsFormProps {
@@ -64,6 +70,9 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
   const [useCustomSep, setUseCustomSep] = useState(initialData.separationTableJson != null);
   const [sepTable, setSepTable] = useState<[number, number][]>(
     initialData.separationTableJson ?? [...SEPARATION_TABLE]
+  );
+  const [mapZones, setMapZones] = useState<MapZonesData>(
+    parseMapZones(initialData.mapZonesJson)
   );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -94,6 +103,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
     const payload = {
       ...data,
       separationTableJson: useCustomSep ? sepTable : null,
+      mapZonesJson: mapZones.length > 0 ? mapZones : null,
     };
 
     const res = await fetch(`/api/dz/${slug}`, {
@@ -105,8 +115,13 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
     setSaving(false);
 
     if (!res.ok) {
-      const body = await res.json();
-      setError(body.error || "Failed to save");
+      const text = await res.text();
+      try {
+        const body = JSON.parse(text);
+        setError(body.error || "Failed to save");
+      } catch {
+        setError(`Failed to save (${res.status})`);
+      }
       return;
     }
 
@@ -141,7 +156,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
               type="number"
               step="any"
               value={data.lat}
-              onChange={(e) => update("lat", parseFloat(e.target.value))}
+              onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) update("lat", v); }}
               className={inputClass}
             />
           </div>
@@ -151,7 +166,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
               type="number"
               step="any"
               value={data.lon}
-              onChange={(e) => update("lon", parseFloat(e.target.value))}
+              onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) update("lon", v); }}
               className={inputClass}
             />
           </div>
@@ -168,7 +183,27 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
           />
         </div>
 
-        {/* 2. Heading Mode */}
+        {/* 2. Map Style */}
+        <SectionHeader>Map Style</SectionHeader>
+
+        <div className="grid grid-cols-3 gap-2">
+          {(Object.keys(MAP_STYLES) as MapStyleKey[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => update("mapStyle", key)}
+              className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                data.mapStyle === key
+                  ? "border-blue-600 bg-blue-50 text-blue-700"
+                  : "border-gray-300 text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {MAP_STYLES[key].label}
+            </button>
+          ))}
+        </div>
+
+        {/* 3. Heading Mode */}
         <SectionHeader>Heading Mode</SectionHeader>
 
         <div className="flex gap-2">
@@ -475,6 +510,22 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             </button>
           </div>
         )}
+
+        {/* 7. Map Zones */}
+        <SectionHeader>Map Zones</SectionHeader>
+        <p className="text-xs text-gray-400 -mt-2 mb-2">
+          Draw landing areas and points of interest on the map.
+        </p>
+
+        <ZoneEditor
+          lat={data.lat}
+          lon={data.lon}
+          zones={mapZones}
+          onChange={(zones) => {
+            setMapZones(zones);
+            setSaved(false);
+          }}
+        />
 
         <div className="pt-4">
           <button

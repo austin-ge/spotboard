@@ -36,6 +36,15 @@ enum HeadingMode {
   FIXED
 }
 
+enum MapStyle {
+  SATELLITE
+  SATELLITE_STREETS
+  OUTDOORS
+  STREETS
+  LIGHT
+  DARK
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -137,6 +146,12 @@ model Dropzone {
 
   // Separation
   separationTableJson   Json?
+
+  // Map style
+  mapStyle              MapStyle @default(SATELLITE_STREETS)
+
+  // Map zones (landing areas, POIs)
+  mapZonesJson          Json?
 
   // Jump planes
   jumpPlanes JumpPlane[]

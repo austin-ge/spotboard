@@ -4,17 +4,37 @@ import { useRef, useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { JumpRunResult } from "@/lib/winds/types";
+import type { MapZonesData } from "@/lib/mapZones";
 import { destinationPoint } from "@/lib/geo";
 import { JUMP_RUN_LENGTH_MILES } from "@/lib/winds/constants";
+import { getMapStyleUrl } from "@/lib/mapStyles";
+
+function polygonCentroid(coords: [number, number][]): [number, number] {
+  if (!coords || coords.length === 0) return [0, 0];
+  let lngSum = 0;
+  let latSum = 0;
+  // Exclude the closing coordinate (same as first)
+  const n = coords.length > 1 && coords[0][0] === coords[coords.length - 1][0] && coords[0][1] === coords[coords.length - 1][1]
+    ? coords.length - 1
+    : coords.length;
+  if (n === 0) return [0, 0];
+  for (let i = 0; i < n; i++) {
+    lngSum += coords[i][0];
+    latSum += coords[i][1];
+  }
+  return [lngSum / n, latSum / n];
+}
 
 interface MapViewProps {
   lat: number;
   lon: number;
   jumpRun: JumpRunResult | null;
   jumpRunLengthMiles?: number;
+  mapZones?: MapZonesData;
+  mapStyle?: string;
 }
 
-export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles }: MapViewProps) {
+export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles, mapZones, mapStyle }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
 
@@ -29,7 +49,7 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles }: MapVi
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/satellite-streets-v12",
+      style: getMapStyleUrl(mapStyle),
       center: [lon, lat],
       zoom: 14,
     });
@@ -45,6 +65,55 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles }: MapVi
     new mapboxgl.Marker({ element: el }).setLngLat([lon, lat]).addTo(map);
 
     map.on("load", () => {
+      // Map zones (landing areas, POIs) — rendered below jump run
+      map.addSource("map-zones", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+
+      map.addSource("map-zone-labels", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+
+      map.addLayer({
+        id: "map-zones-fill",
+        type: "fill",
+        source: "map-zones",
+        paint: {
+          "fill-color": ["get", "color"],
+          "fill-opacity": 0.25,
+        },
+      });
+
+      map.addLayer({
+        id: "map-zones-outline",
+        type: "line",
+        source: "map-zones",
+        paint: {
+          "line-color": ["get", "color"],
+          "line-width": 2,
+          "line-opacity": 0.8,
+        },
+      });
+
+      map.addLayer({
+        id: "map-zone-labels",
+        type: "symbol",
+        source: "map-zone-labels",
+        layout: {
+          "text-field": ["get", "label"],
+          "text-size": 13,
+          "text-font": ["DIN Pro Medium", "Arial Unicode MS Bold"],
+          "text-allow-overlap": true,
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": "#000000",
+          "text-halo-width": 1.5,
+        },
+      });
+
       // Jump run line source
       map.addSource("jump-run", {
         type: "geojson",
@@ -105,7 +174,7 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles }: MapVi
       map.remove();
       mapRef.current = null;
     };
-  }, [lat, lon]);
+  }, [lat, lon, mapStyle]);
 
   // Update jump run line
   useEffect(() => {
@@ -170,6 +239,48 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles }: MapVi
       map.on("load", updateLine);
     }
   }, [jumpRun, lat, lon]);
+
+  // Update map zones
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    function updateZones() {
+      const zonesSource = map!.getSource("map-zones") as mapboxgl.GeoJSONSource;
+      const labelsSource = map!.getSource("map-zone-labels") as mapboxgl.GeoJSONSource;
+      if (!zonesSource || !labelsSource) return;
+
+      const zones = mapZones ?? [];
+
+      zonesSource.setData({
+        type: "FeatureCollection",
+        features: zones.map((z) => ({
+          type: "Feature" as const,
+          properties: { color: z.color },
+          geometry: z.geometry,
+        })),
+      });
+
+      labelsSource.setData({
+        type: "FeatureCollection",
+        features: zones.map((z) => {
+          const ring = z.geometry.coordinates[0];
+          const [lng, lat] = ring ? polygonCentroid(ring) : [0, 0];
+          return {
+            type: "Feature" as const,
+            properties: { label: z.label },
+            geometry: { type: "Point" as const, coordinates: [lng, lat] },
+          };
+        }),
+      });
+    }
+
+    if (map.isStyleLoaded()) {
+      updateZones();
+    } else {
+      map.on("load", updateZones);
+    }
+  }, [mapZones]);
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 

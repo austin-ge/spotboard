@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { canEditDZ } from "@/lib/permissions";
 import { buildDropzoneConfig } from "@/lib/winds/config";
+import { parseMapZones } from "@/lib/mapZones";
 import DZPageClient from "./DZPageClient";
 
 interface Props {
@@ -31,6 +32,7 @@ export default async function DZPage({ params }: Props) {
   if (!dz) notFound();
 
   const config = buildDropzoneConfig(dz);
+  const mapZones = parseMapZones(dz.mapZonesJson);
 
   const session = await auth();
   const showSettings = session?.user
@@ -45,6 +47,8 @@ export default async function DZPage({ params }: Props) {
       lon={dz.lon}
       config={config}
       showSettings={showSettings}
+      mapZones={mapZones}
+      mapStyle={dz.mapStyle}
     />
   );
 }
