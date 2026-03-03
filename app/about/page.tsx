@@ -68,6 +68,27 @@ export default function AboutPage() {
             </ul>
           </section>
 
+          {/* ADS-B Coverage */}
+          <section className="rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-8">
+            <h2 className="text-xl font-semibold text-slate-900 mb-3">
+              ADS-B Coverage
+            </h2>
+            <p className="text-slate-600 leading-relaxed mb-4">
+              Currently, Spotboard receives ADS-B data from a single station
+              located at Skydive Midwest, providing roughly 300 miles of
+              coverage. That works well for dropzones in the region, but
+              aircraft tracking degrades the farther you are from that receiver.
+            </p>
+            <p className="text-slate-600 leading-relaxed">
+              We'd love to expand coverage by having more dropzones set up their
+              own ADS-B receivers. All it takes is a Raspberry Pi running
+              dump1090 — once connected, your station feeds live aircraft data
+              into Spotboard and improves tracking accuracy for your location and
+              the surrounding area. If your dropzone is interested in adding a
+              receiver, reach out and we can help you get set up.
+            </p>
+          </section>
+
           {/* Tech */}
           <section className="rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-8">
             <h2 className="text-xl font-semibold text-slate-900 mb-3">
