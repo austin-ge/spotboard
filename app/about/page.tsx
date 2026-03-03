@@ -80,12 +80,20 @@ export default function AboutPage() {
               aircraft tracking degrades the farther you are from that receiver.
             </p>
             <p className="text-slate-600 leading-relaxed">
-              We'd love to expand coverage by having more dropzones set up their
+              We&apos;d love to expand coverage by having more dropzones set up their
               own ADS-B receivers. All it takes is a Raspberry Pi running
               dump1090 — once connected, your station feeds live aircraft data
               into Spotboard and improves tracking accuracy for your location and
               the surrounding area. If your dropzone is interested in adding a
-              receiver, reach out and we can help you get set up.
+              receiver, reach out and we can help you get set up. Check out
+              our{" "}
+              <Link
+                href="/adsb-setup"
+                className="font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+              >
+                Raspberry Pi setup guide
+              </Link>{" "}
+              to get started.
             </p>
           </section>
 
