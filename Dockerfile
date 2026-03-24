@@ -15,6 +15,10 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
+# NEXT_PUBLIC_ vars must be present at build time (baked into client JS)
+ARG NEXT_PUBLIC_MAPBOX_TOKEN
+ENV NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN
+
 # Build Next.js (standalone output)
 RUN npm run build
 
