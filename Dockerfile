@@ -39,6 +39,9 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules ./node_modules
 
+# Production Prisma config (plain JS, no TS runtime needed)
+COPY prisma.config.production.js ./
+
 # Entrypoint runs migrations then starts server
 COPY docker-entrypoint.sh ./
 USER nextjs
