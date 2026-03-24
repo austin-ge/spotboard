@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useWinds } from "@/lib/hooks/useWinds";
 import { useJumpRun } from "@/lib/hooks/useJumpRun";
+import { useAircraft } from "@/lib/hooks/useAircraft";
 import Sidebar from "@/components/dz/Sidebar";
 import MapView from "@/components/map/MapView";
 import MobileToggle from "@/components/dz/MobileToggle";
@@ -18,6 +19,7 @@ interface DZPageClientProps {
   showSettings: boolean;
   mapZones: MapZonesData;
   mapStyle: string;
+  hasJumpPlanes: boolean;
 }
 
 export default function DZPageClient({
@@ -29,10 +31,12 @@ export default function DZPageClient({
   showSettings,
   mapZones,
   mapStyle,
+  hasJumpPlanes,
 }: DZPageClientProps) {
   const [showMap, setShowMap] = useState(false);
   const { winds, loading, error } = useWinds(lat, lon);
   const jumpRun = useJumpRun(winds?.layers ?? null, config);
+  const { data: aircraftData } = useAircraft(slug, hasJumpPlanes);
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
@@ -67,6 +71,7 @@ export default function DZPageClient({
           jumpRunLengthMiles={config.drift.jumpRunLengthMiles}
           mapZones={mapZones}
           mapStyle={mapStyle}
+          aircraft={aircraftData?.aircraft}
         />
       </div>
 

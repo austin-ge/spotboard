@@ -13,7 +13,10 @@ export default async function SettingsPage({ params }: Props) {
   if (!session) redirect("/login");
 
   const { slug } = await params;
-  const dz = await prisma.dropzone.findUnique({ where: { slug } });
+  const dz = await prisma.dropzone.findUnique({
+    where: { slug },
+    include: { jumpPlanes: { select: { hexCode: true, tailNumber: true } } },
+  });
   if (!dz) notFound();
 
   const allowed = await canEditDZ(session.user, dz.id);
@@ -61,6 +64,10 @@ export default async function SettingsPage({ params }: Props) {
           separationTableJson: dz.separationTableJson as [number, number][] | null,
           mapZonesJson: dz.mapZonesJson,
           mapStyle: dz.mapStyle,
+          jumpPlanes: dz.jumpPlanes.map((p) => ({
+            hexCode: p.hexCode,
+            tailNumber: p.tailNumber ?? "",
+          })),
         }}
       />
     </main>

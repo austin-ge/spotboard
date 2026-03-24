@@ -28,7 +28,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DZPage({ params }: Props) {
   const { slug } = await params;
-  const dz = await prisma.dropzone.findUnique({ where: { slug } });
+  const dz = await prisma.dropzone.findUnique({
+    where: { slug },
+    include: { jumpPlanes: { select: { id: true } } },
+  });
   if (!dz) notFound();
 
   const config = buildDropzoneConfig(dz);
@@ -49,6 +52,7 @@ export default async function DZPage({ params }: Props) {
       showSettings={showSettings}
       mapZones={mapZones}
       mapStyle={dz.mapStyle}
+      hasJumpPlanes={dz.jumpPlanes.length > 0}
     />
   );
 }

@@ -5,6 +5,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { JumpRunResult } from "@/lib/winds/types";
 import type { MapZonesData } from "@/lib/mapZones";
+import type { AircraftPosition } from "@/lib/adsb/types";
 import { destinationPoint } from "@/lib/geo";
 import { JUMP_RUN_LENGTH_MILES } from "@/lib/winds/constants";
 import { getMapStyleUrl } from "@/lib/mapStyles";
@@ -32,9 +33,10 @@ interface MapViewProps {
   jumpRunLengthMiles?: number;
   mapZones?: MapZonesData;
   mapStyle?: string;
+  aircraft?: AircraftPosition[];
 }
 
-export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles, mapZones, mapStyle }: MapViewProps) {
+export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles, mapZones, mapStyle, aircraft }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
 
@@ -166,6 +168,70 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles, mapZone
           "icon-color": "#76ff03",
         },
       });
+
+      // Aircraft tracking layer
+      map.addSource("aircraft", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+
+      map.addSource("aircraft-labels", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+
+      // Aircraft icon (uses built-in airport icon, rotated by track)
+      map.addLayer({
+        id: "aircraft-icons",
+        type: "symbol",
+        source: "aircraft",
+        layout: {
+          "icon-image": "airport",
+          "icon-size": ["case", ["get", "isJumpPlane"], 1.8, 1.2],
+          "icon-rotate": ["get", "track"],
+          "icon-rotation-alignment": "map",
+          "icon-allow-overlap": true,
+        },
+        paint: {
+          // Jump planes = bright cyan, other traffic = dim gray
+          "icon-color": [
+            "case",
+            ["get", "isJumpPlane"],
+            "#00e5ff",
+            "#9e9e9e",
+          ],
+          "icon-opacity": [
+            "case",
+            ["get", "isJumpPlane"],
+            1.0,
+            0.5,
+          ],
+        },
+      });
+
+      // Aircraft altitude/tail labels
+      map.addLayer({
+        id: "aircraft-labels",
+        type: "symbol",
+        source: "aircraft-labels",
+        layout: {
+          "text-field": ["get", "label"],
+          "text-size": 11,
+          "text-font": ["DIN Pro Medium", "Arial Unicode MS Bold"],
+          "text-offset": [0, 1.8],
+          "text-allow-overlap": false,
+        },
+        paint: {
+          "text-color": [
+            "case",
+            ["get", "isJumpPlane"],
+            "#00e5ff",
+            "#bdbdbd",
+          ],
+          "text-halo-color": "#000000",
+          "text-halo-width": 1.2,
+        },
+      });
     });
 
     mapRef.current = map;
@@ -281,6 +347,62 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles, mapZone
       map.on("load", updateZones);
     }
   }, [mapZones]);
+
+  // Update aircraft positions
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    function updateAircraft() {
+      const acSource = map!.getSource("aircraft") as mapboxgl.GeoJSONSource;
+      const labelSource = map!.getSource("aircraft-labels") as mapboxgl.GeoJSONSource;
+      if (!acSource || !labelSource) return;
+
+      const positions = aircraft ?? [];
+
+      acSource.setData({
+        type: "FeatureCollection",
+        features: positions.map((ac) => ({
+          type: "Feature" as const,
+          properties: {
+            isJumpPlane: ac.isJumpPlane,
+            track: ac.trackDeg ?? 0,
+          },
+          geometry: {
+            type: "Point" as const,
+            coordinates: [ac.lon, ac.lat],
+          },
+        })),
+      });
+
+      labelSource.setData({
+        type: "FeatureCollection",
+        features: positions.map((ac) => {
+          const alt = ac.altitudeFt != null ? `${Math.round(ac.altitudeFt / 100)}` : "";
+          const label = ac.tailNumber
+            ? `${ac.tailNumber} ${alt}`
+            : ac.isJumpPlane
+              ? `${ac.hex.toUpperCase()} ${alt}`
+              : alt;
+
+          return {
+            type: "Feature" as const,
+            properties: { label: label.trim(), isJumpPlane: ac.isJumpPlane },
+            geometry: {
+              type: "Point" as const,
+              coordinates: [ac.lon, ac.lat],
+            },
+          };
+        }),
+      });
+    }
+
+    if (map.isStyleLoaded()) {
+      updateAircraft();
+    } else {
+      map.on("load", updateAircraft);
+    }
+  }, [aircraft]);
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 

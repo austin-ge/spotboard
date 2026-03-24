@@ -1,0 +1,33 @@
+# ADS-B Aggregator — accepts Beast TCP from remote feeders
+# Run: docker compose -f docker-compose.readsb.yml up -d
+#
+# Feeders connect by adding to their readsb/dump1090 config:
+#   --net-connector your-vps-ip,30004,beast_out
+#
+# aircraft.json served at http://localhost:8078/data/aircraft.json
+
+services:
+  adsb-aggregator:
+    image: ghcr.io/sdr-enthusiasts/docker-adsb-ultrafeeder
+    container_name: spotboard-adsb
+    restart: unless-stopped
+    environment:
+      # Network-only mode (no SDR dongle)
+      - READSB_NET_ONLY=true
+      # Accept Beast TCP connections from remote feeders
+      - READSB_NET_BEAST_INPUT_PORT=30004
+      # Write JSON every 1 second for near-realtime
+      - READSB_JSON_INTERVAL=1
+      # tar1090 settings
+      - UPDATE_TAR1090=true
+      - TAR1090_DEFAULTCENTERLAT=0
+      - TAR1090_DEFAULTCENTERLON=0
+      - TAR1090_MESSAGERATEINTITLE=true
+    ports:
+      # Beast TCP input — feeders connect here
+      - "30004:30004"
+      # tar1090 web UI + aircraft.json API (keep internal or firewall)
+      - "8078:80"
+    tmpfs:
+      - /run/readsb:size=64M
+      - /tmp:size=64M

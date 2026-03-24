@@ -134,6 +134,38 @@ export async function PATCH(
       },
     });
 
+    // Sync jump planes if provided (replace all)
+    if (body.jumpPlanes !== undefined) {
+      if (!Array.isArray(body.jumpPlanes)) {
+        return NextResponse.json({ error: "jumpPlanes must be an array" }, { status: 400 });
+      }
+
+      // Validate each plane
+      for (const plane of body.jumpPlanes) {
+        if (!plane.hexCode || typeof plane.hexCode !== "string") {
+          return NextResponse.json({ error: "Each plane needs a hexCode" }, { status: 400 });
+        }
+        if (!/^[0-9a-f]{6}$/i.test(plane.hexCode)) {
+          return NextResponse.json(
+            { error: `Invalid ICAO hex: ${plane.hexCode} (must be 6 hex characters)` },
+            { status: 400 }
+          );
+        }
+      }
+
+      // Delete existing and recreate
+      await prisma.jumpPlane.deleteMany({ where: { dropzoneId: dz.id } });
+      if (body.jumpPlanes.length > 0) {
+        await prisma.jumpPlane.createMany({
+          data: body.jumpPlanes.map((p: { hexCode: string; tailNumber?: string }) => ({
+            dropzoneId: dz.id,
+            hexCode: p.hexCode.toLowerCase(),
+            tailNumber: p.tailNumber || null,
+          })),
+        });
+      }
+    }
+
     return NextResponse.json({ slug: updated.slug });
   } catch (err) {
     console.error("Failed to update dropzone:", err);

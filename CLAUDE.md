@@ -53,6 +53,21 @@ auth.ts               # NextAuth configuration
 - **Offset / Green Light**: Where to start the jump run, accounting for canopy drift, freefall drift, and ground speed
 - **ADS-B**: Aircraft tracking via dump1090 (local receiver) or adsb.lol (public fallback)
 
+## Obsidian Vault
+
+This project is mirrored in the Obsidian vault at `~/Notes/Claude/10 Projects/Spot Board/Spot Board.md`. When significant work is completed (features shipped, deployments, architecture changes), update that note to reflect the current state.
+
+## Session Summaries
+
+When asked to summarize the session, "write it up", or "log this", append a dated entry to `~/Notes/Claude/00 Inbox/Inbox.md` with:
+- **Date and project name** as a heading
+- What was worked on
+- What was completed
+- What's still pending or blocked
+- Links to relevant files that were created or modified
+
+---
+
 ## Skills
 
 When writing React components or pages, use `/vercel-react-best-practices` for performance patterns.

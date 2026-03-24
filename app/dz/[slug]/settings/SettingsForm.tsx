@@ -19,6 +19,11 @@ import { MAP_STYLES, type MapStyleKey } from "@/lib/mapStyles";
 
 type HeadingMode = "AUTO" | "RUNWAY" | "FIXED";
 
+interface JumpPlaneEntry {
+  hexCode: string;
+  tailNumber: string;
+}
+
 interface SettingsData {
   name: string;
   lat: number;
@@ -45,6 +50,7 @@ interface SettingsData {
   separationTableJson: [number, number][] | null;
   mapZonesJson: unknown;
   mapStyle: string;
+  jumpPlanes: JumpPlaneEntry[];
 }
 
 interface SettingsFormProps {
@@ -73,6 +79,9 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
   );
   const [mapZones, setMapZones] = useState<MapZonesData>(
     parseMapZones(initialData.mapZonesJson)
+  );
+  const [jumpPlanes, setJumpPlanes] = useState<JumpPlaneEntry[]>(
+    initialData.jumpPlanes ?? []
   );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -104,6 +113,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
       ...data,
       separationTableJson: useCustomSep ? sepTable : null,
       mapZonesJson: mapZones.length > 0 ? mapZones : null,
+      jumpPlanes: jumpPlanes.filter((p) => p.hexCode.trim() !== ""),
     };
 
     const res = await fetch(`/api/dz/${slug}`, {
@@ -511,7 +521,81 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
           </div>
         )}
 
-        {/* 7. Map Zones */}
+        {/* 7. Aircraft Tracking (ADS-B) */}
+        <SectionHeader>Aircraft Tracking</SectionHeader>
+        <p className="text-xs text-gray-400 -mt-2 mb-2">
+          Register your jump planes by ICAO hex code for ADS-B tracking on the map.
+          Find hex codes on{" "}
+          <a
+            href="https://www.adsbexchange.com/acid/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-600 underline"
+          >
+            ADS-B Exchange
+          </a>.
+        </p>
+
+        <div className="space-y-2">
+          {jumpPlanes.length > 0 && (
+            <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-xs text-gray-500 font-medium px-1">
+              <span>ICAO Hex Code</span>
+              <span>Tail Number</span>
+              <span className="w-7" />
+            </div>
+          )}
+          {jumpPlanes.map((plane, i) => (
+            <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+              <input
+                type="text"
+                value={plane.hexCode}
+                onChange={(e) => {
+                  const next = [...jumpPlanes];
+                  next[i] = { ...next[i], hexCode: e.target.value.toLowerCase().replace(/[^0-9a-f]/g, "").slice(0, 6) };
+                  setJumpPlanes(next);
+                  setSaved(false);
+                }}
+                placeholder="e.g. a1b2c3"
+                maxLength={6}
+                className={`${inputClass} font-mono`}
+              />
+              <input
+                type="text"
+                value={plane.tailNumber}
+                onChange={(e) => {
+                  const next = [...jumpPlanes];
+                  next[i] = { ...next[i], tailNumber: e.target.value.toUpperCase() };
+                  setJumpPlanes(next);
+                  setSaved(false);
+                }}
+                placeholder="e.g. N12345"
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setJumpPlanes((p) => p.filter((_, j) => j !== i));
+                  setSaved(false);
+                }}
+                className="text-red-400 hover:text-red-600 text-sm w-7"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              setJumpPlanes((p) => [...p, { hexCode: "", tailNumber: "" }]);
+              setSaved(false);
+            }}
+            className="text-sm text-blue-600 hover:text-blue-700"
+          >
+            + Add aircraft
+          </button>
+        </div>
+
+        {/* 8. Map Zones */}
         <SectionHeader>Map Zones</SectionHeader>
         <p className="text-xs text-gray-400 -mt-2 mb-2">
           Draw landing areas and points of interest on the map.
