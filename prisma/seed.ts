@@ -28,7 +28,7 @@ async function main() {
 
   const entries = dropzoneData.Dropzones[0] as Record<
     string,
-    { lat: number; lon: number; Dropzone: string }
+    { lat: number; lon: number; Dropzone: string; website?: string }
   >;
 
   const slugsSeen = new Set<string>();
