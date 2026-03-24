@@ -52,6 +52,7 @@ async function main() {
         lat: dz.lat,
         lon: dz.lon,
         airportCode: code,
+        website: dz.website || null,
         ownerId: systemUser.id,
       },
     });
