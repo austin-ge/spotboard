@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import DirectorySearch from "@/components/dz/DirectorySearch";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const dropzones = await prisma.dropzone.findMany({
     where: { isPublic: true },
