@@ -35,11 +35,9 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 
-# Copy Prisma schema + migrations for runtime migrate
+# Copy Prisma schema + migrations + full node_modules for migrate CLI
 COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=build /app/node_modules/prisma ./node_modules/prisma
+COPY --from=build /app/node_modules ./node_modules
 
 # Entrypoint runs migrations then starts server
 COPY docker-entrypoint.sh ./
