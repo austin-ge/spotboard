@@ -53,7 +53,7 @@ services:
       - TAR1090_DEFAULTCENTERLON=0
     ports:
       # Beast TCP input — feeders connect here from outside
-      - "30004:30004"
+      - "${READSB_HOST_PORT:-30004}:30004"
     tmpfs:
       - /run/readsb:size=64M
       - /tmp:size=64M
