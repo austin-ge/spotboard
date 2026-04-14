@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import DropzoneCard from "./DropzoneCard";
 
 interface DZEntry {
@@ -11,12 +11,43 @@ interface DZEntry {
   airportCode?: string | null;
 }
 
+const FAVORITES_KEY = "spotboard-favorites";
+
+function loadFavorites(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveFavorites(slugs: Set<string>) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify([...slugs]));
+}
+
 export default function DirectorySearch({
   dropzones,
 }: {
   dropzones: DZEntry[];
 }) {
   const [query, setQuery] = useState("");
+  const [favSlugs, setFavSlugs] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setFavSlugs(loadFavorites());
+  }, []);
+
+  const toggleFavorite = useCallback((slug: string) => {
+    setFavSlugs((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      saveFavorites(next);
+      return next;
+    });
+  }, []);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return dropzones;
@@ -28,6 +59,11 @@ export default function DirectorySearch({
         dz.airportCode?.toLowerCase().includes(q)
     );
   }, [dropzones, query]);
+
+  const favorites = useMemo(
+    () => dropzones.filter((dz) => favSlugs.has(dz.slug)),
+    [dropzones, favSlugs]
+  );
 
   return (
     <div className="space-y-5">
@@ -59,7 +95,31 @@ export default function DirectorySearch({
         )}
       </div>
 
+      {/* Favorites */}
+      {favorites.length > 0 && !query && (
+        <div className="space-y-3">
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1">
+            Favorites
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {favorites.map((dz) => (
+              <DropzoneCard
+                key={dz.slug}
+                {...dz}
+                isFavorite
+                onToggleFavorite={toggleFavorite}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Grid */}
+      {!query && favorites.length > 0 && (
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1">
+          All Dropzones
+        </h2>
+      )}
       {filtered.length === 0 ? (
         <div className="rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] text-center py-12">
           <p className="text-sm text-slate-400">No dropzones found.</p>
@@ -67,7 +127,12 @@ export default function DirectorySearch({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((dz) => (
-            <DropzoneCard key={dz.slug} {...dz} />
+            <DropzoneCard
+              key={dz.slug}
+              {...dz}
+              isFavorite={favSlugs.has(dz.slug)}
+              onToggleFavorite={toggleFavorite}
+            />
           ))}
         </div>
       )}
