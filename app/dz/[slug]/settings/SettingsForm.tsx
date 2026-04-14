@@ -524,28 +524,63 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
         {/* 7. Aircraft Tracking (ADS-B) */}
         <SectionHeader>Aircraft Tracking</SectionHeader>
         <p className="text-xs text-gray-400 -mt-2 mb-2">
-          Register your jump planes by ICAO hex code for ADS-B tracking on the map.
-          Find hex codes on{" "}
-          <a
-            href="https://www.adsbexchange.com/acid/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:text-blue-600 underline"
-          >
-            ADS-B Exchange
-          </a>.
+          Register your jump planes for ADS-B tracking on the map.
+          Enter a tail number and click Lookup to auto-fill the hex code.
         </p>
 
         <div className="space-y-2">
           {jumpPlanes.length > 0 && (
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-xs text-gray-500 font-medium px-1">
-              <span>ICAO Hex Code</span>
+            <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-2 text-xs text-gray-500 font-medium px-1">
               <span>Tail Number</span>
+              <span className="w-16" />
+              <span>ICAO Hex Code</span>
               <span className="w-7" />
             </div>
           )}
           {jumpPlanes.map((plane, i) => (
-            <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+            <div key={i} className="grid grid-cols-[1fr_auto_1fr_auto] gap-2 items-center">
+              <input
+                type="text"
+                value={plane.tailNumber}
+                onChange={(e) => {
+                  const next = [...jumpPlanes];
+                  next[i] = { ...next[i], tailNumber: e.target.value.toUpperCase() };
+                  setJumpPlanes(next);
+                  setSaved(false);
+                }}
+                placeholder="e.g. N12345"
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  const tail = plane.tailNumber.trim();
+                  if (!tail) return;
+                  const btn = document.getElementById(`lookup-${i}`);
+                  if (btn) btn.textContent = "...";
+                  try {
+                    const res = await fetch(`/api/aircraft-lookup?reg=${encodeURIComponent(tail)}`);
+                    if (!res.ok) {
+                      if (btn) btn.textContent = "Not found";
+                      setTimeout(() => { if (btn) btn.textContent = "Lookup"; }, 2000);
+                      return;
+                    }
+                    const data = await res.json();
+                    const next = [...jumpPlanes];
+                    next[i] = { ...next[i], hexCode: data.hexCode };
+                    setJumpPlanes(next);
+                    setSaved(false);
+                    if (btn) btn.textContent = "Lookup";
+                  } catch {
+                    if (btn) btn.textContent = "Error";
+                    setTimeout(() => { if (btn) btn.textContent = "Lookup"; }, 2000);
+                  }
+                }}
+                id={`lookup-${i}`}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium w-16 text-center"
+              >
+                Lookup
+              </button>
               <input
                 type="text"
                 value={plane.hexCode}
@@ -558,18 +593,6 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
                 placeholder="e.g. a1b2c3"
                 maxLength={6}
                 className={`${inputClass} font-mono`}
-              />
-              <input
-                type="text"
-                value={plane.tailNumber}
-                onChange={(e) => {
-                  const next = [...jumpPlanes];
-                  next[i] = { ...next[i], tailNumber: e.target.value.toUpperCase() };
-                  setJumpPlanes(next);
-                  setSaved(false);
-                }}
-                placeholder="e.g. N12345"
-                className={inputClass}
               />
               <button
                 type="button"
