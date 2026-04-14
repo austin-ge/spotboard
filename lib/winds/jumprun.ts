@@ -107,6 +107,9 @@ export function calculateOffset(
   const headingRad = (headingDeg * Math.PI) / 180;
 
   // 1. Canopy drift: opening alt → holding area alt
+  //    Net drift = wind pushes canopy downwind, canopy flies upwind at forward speed.
+  //    Positive component = headwind (pushes jumper back from DZ along jump run).
+  //    Canopy forward speed opposes wind, reducing net drift.
   let canopyDriftMiles = 0;
   const canopyAltRange = profile.openingAltitudeFt - profile.holdingAreaAltitudeFt;
   const canopyTimeMins = canopyAltRange / (drift.canopyDescentRateMph * 5280 / 60);
@@ -120,19 +123,15 @@ export function calculateOffset(
 
     const windSpeedMph = layer.speedKts * KTS_TO_MPH;
     const windDirRad = (layer.directionDeg * Math.PI) / 180;
-    const component = windSpeedMph * Math.cos(windDirRad - headingRad);
+    const windComponent = windSpeedMph * Math.cos(windDirRad - headingRad);
+    // Net drift: wind pushes jumper, canopy forward speed pulls them back
+    const netComponent = windComponent - drift.canopyForwardSpeedMph;
     const layerFraction = 1000 / canopyAltRange;
     const layerTimeHrs = (canopyTimeMins * layerFraction) / 60;
-    canopyDriftMiles += component * layerTimeHrs;
+    canopyDriftMiles += netComponent * layerTimeHrs;
   }
 
-  // 2. Opening point offset — canopy flies upwind at forward speed
-  const openingTimeHrs =
-    (profile.openingAltitudeFt - profile.holdingAreaAltitudeFt) /
-    (drift.canopyDescentRateMph * 5280) * 60 / 60;
-  const openingOffsetMiles = drift.canopyForwardSpeedMph * openingTimeHrs;
-
-  // 3. Freefall drift: exit alt → opening alt
+  // 2. Freefall drift: exit alt → opening alt
   const freefallAltRange = profile.exitAltitudeFt - profile.openingAltitudeFt;
   const freefallTimeHrs = freefallAltRange / (drift.freefallTerminalVelocityMph * 5280) * 60 / 60;
 
@@ -151,9 +150,9 @@ export function calculateOffset(
     freefallDriftMiles += component * layerFraction * freefallTimeHrs;
   }
 
-  // 4. Total offset
+  // 3. Total offset
   const totalOffset =
-    canopyDriftMiles + openingOffsetMiles + freefallDriftMiles +
+    canopyDriftMiles + freefallDriftMiles +
     drift.lightToDoorMiles + drift.airplaneDriftMiles;
 
   return Math.max(-drift.maxOffsetMiles, Math.min(drift.maxOffsetMiles, totalOffset));
