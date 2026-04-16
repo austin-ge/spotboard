@@ -10,6 +10,32 @@ import { destinationPoint } from "@/lib/geo";
 import { JUMP_RUN_LENGTH_MILES } from "@/lib/winds/constants";
 import { getMapStyleUrl } from "@/lib/mapStyles";
 
+// Top-down plane silhouettes — nose points up (north/0°) so icon-rotate matches track heading
+const JUMP_PLANE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -32 64 64"><path d="M 0 -28 C -4.5 -28 -6 -23 -6 -16 L -6 -4 L -29 3 L -29 8 L -6 6 L -6 16 L -14 21 L -14 23 L 0 20 L 14 23 L 14 21 L 6 16 L 6 6 L 29 8 L 29 3 L 6 -4 L 6 -16 C 6 -23 4.5 -28 0 -28 Z" fill="white"/></svg>`;
+
+const TRAFFIC_PLANE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -32 64 64"><path d="M 0 -25 L -2.2 -22 L -2.2 -4 L -25 4 L -25 8 L -2.2 5.5 L -2.2 15 L -9 19.5 L -9 21 L 0 18.5 L 9 21 L 9 19.5 L 2.2 15 L 2.2 5.5 L 25 8 L 25 4 L 2.2 -4 L 2.2 -22 Z" fill="white"/></svg>`;
+
+async function addPlaneImage(map: mapboxgl.Map, name: string, svg: string): Promise<void> {
+  if (map.hasImage(name)) return;
+  const size = 128;
+  const img = new window.Image(size, size);
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error(`failed to load ${name} SVG`));
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.drawImage(img, 0, 0, size, size);
+  const imageData = ctx.getImageData(0, 0, size, size);
+  if (!map.hasImage(name)) {
+    map.addImage(name, imageData, { sdf: true, pixelRatio: 2 });
+  }
+}
+
 function polygonCentroid(coords: [number, number][]): [number, number] {
   if (!coords || coords.length === 0) return [0, 0];
   let lngSum = 0;
@@ -66,7 +92,13 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles, mapZone
     el.style.boxShadow = "0 0 8px rgba(0,0,0,0.4)";
     new mapboxgl.Marker({ element: el }).setLngLat([lon, lat]).addTo(map);
 
-    map.on("load", () => {
+    map.on("load", async () => {
+      // Load custom plane icons (SDF so we can color them via paint properties)
+      await Promise.all([
+        addPlaneImage(map, "plane-jump", JUMP_PLANE_SVG),
+        addPlaneImage(map, "plane-traffic", TRAFFIC_PLANE_SVG),
+      ]).catch((err) => console.warn("plane icon load failed", err));
+
       // Map zones (landing areas, POIs) — rendered below jump run
       map.addSource("map-zones", {
         type: "geojson",
@@ -180,31 +212,62 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles, mapZone
         data: { type: "FeatureCollection", features: [] },
       });
 
-      // Aircraft icon (uses built-in airport icon, rotated by track)
+      // Projected track vector (jump planes only) — drawn under icons
+      map.addSource("aircraft-tracks", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+
+      map.addLayer({
+        id: "aircraft-tracks",
+        type: "line",
+        source: "aircraft-tracks",
+        paint: {
+          "line-color": "#00e5ff",
+          "line-width": 1.5,
+          "line-opacity": 0.55,
+          "line-dasharray": [2, 2],
+        },
+      });
+
+      // Aircraft icons — distinct silhouettes for jump planes vs traffic
       map.addLayer({
         id: "aircraft-icons",
         type: "symbol",
         source: "aircraft",
         layout: {
-          "icon-image": "airport",
-          "icon-size": ["case", ["get", "isJumpPlane"], 1.8, 1.2],
+          "icon-image": [
+            "case",
+            ["get", "isJumpPlane"],
+            "plane-jump",
+            "plane-traffic",
+          ],
+          "icon-size": ["case", ["get", "isJumpPlane"], 0.7, 0.4],
           "icon-rotate": ["get", "track"],
           "icon-rotation-alignment": "map",
           "icon-allow-overlap": true,
         },
         paint: {
-          // Jump planes = bright cyan, other traffic = dim gray
+          // Jump planes = bright cyan with glow, other traffic = dim gray
           "icon-color": [
             "case",
             ["get", "isJumpPlane"],
             "#00e5ff",
             "#9e9e9e",
           ],
+          "icon-halo-color": [
+            "case",
+            ["get", "isJumpPlane"],
+            "rgba(0, 229, 255, 0.65)",
+            "rgba(0, 0, 0, 0)",
+          ],
+          "icon-halo-width": ["case", ["get", "isJumpPlane"], 1.5, 0],
+          "icon-halo-blur": ["case", ["get", "isJumpPlane"], 2, 0],
           "icon-opacity": [
             "case",
             ["get", "isJumpPlane"],
             1.0,
-            0.5,
+            0.55,
           ],
         },
       });
@@ -356,6 +419,7 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles, mapZone
     function updateAircraft() {
       const acSource = map!.getSource("aircraft") as mapboxgl.GeoJSONSource;
       const labelSource = map!.getSource("aircraft-labels") as mapboxgl.GeoJSONSource;
+      const trackSource = map!.getSource("aircraft-tracks") as mapboxgl.GeoJSONSource;
       if (!acSource || !labelSource) return;
 
       const positions = aircraft ?? [];
@@ -395,6 +459,44 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles, mapZone
           };
         }),
       });
+
+      // Projected track vector — 60 seconds ahead, jump planes only
+      if (trackSource) {
+        const NM_TO_MILES = 1.15078;
+        const trackFeatures = positions
+          .filter(
+            (ac) =>
+              ac.isJumpPlane &&
+              ac.trackDeg != null &&
+              ac.groundSpeedKts != null &&
+              ac.groundSpeedKts > 20
+          )
+          .map((ac) => {
+            // groundspeed (kts = nm/hr) * (1 min / 60 min) = nm, then to miles
+            const distMiles = (ac.groundSpeedKts! / 60) * NM_TO_MILES;
+            const [endLat, endLon] = destinationPoint(
+              ac.lat,
+              ac.lon,
+              ac.trackDeg!,
+              distMiles
+            );
+            return {
+              type: "Feature" as const,
+              properties: {},
+              geometry: {
+                type: "LineString" as const,
+                coordinates: [
+                  [ac.lon, ac.lat],
+                  [endLon, endLat],
+                ],
+              },
+            };
+          });
+        trackSource.setData({
+          type: "FeatureCollection",
+          features: trackFeatures,
+        });
+      }
     }
 
     if (map.isStyleLoaded()) {

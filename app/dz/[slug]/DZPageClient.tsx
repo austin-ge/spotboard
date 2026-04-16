@@ -57,6 +57,8 @@ export default function DZPageClient({
           loading={loading}
           error={error}
           showSettings={showSettings}
+          aircraft={aircraftData?.aircraft}
+          hasJumpPlanes={hasJumpPlanes}
         />
       </div>
 

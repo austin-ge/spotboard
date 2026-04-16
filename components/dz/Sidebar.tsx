@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import type { WindLayer, JumpRunResult } from "@/lib/winds/types";
+import type { AircraftPosition } from "@/lib/adsb/types";
 import StatusStrip from "./StatusStrip";
 import JumpRunCard from "./JumpRunCard";
+import JumpPlanesCard from "./JumpPlanesCard";
 import WindsTable from "./WindsTable";
 
 interface SidebarProps {
@@ -17,6 +19,8 @@ interface SidebarProps {
   loading: boolean;
   error: string | null;
   showSettings: boolean;
+  aircraft: AircraftPosition[] | undefined;
+  hasJumpPlanes: boolean;
 }
 
 export default function Sidebar({
@@ -30,6 +34,8 @@ export default function Sidebar({
   loading,
   error,
   showSettings,
+  aircraft,
+  hasJumpPlanes,
 }: SidebarProps) {
   return (
     <div className="h-full flex flex-col bg-[#0c1018] text-slate-200 relative">
@@ -78,6 +84,12 @@ export default function Sidebar({
       {/* Scrollable content */}
       <div className="relative z-10 flex-1 overflow-y-auto panel-scroll px-6 py-5 space-y-6">
         <JumpRunCard jumpRun={jumpRun} />
+        {hasJumpPlanes && (
+          <>
+            <div className="h-px bg-gradient-to-r from-transparent via-slate-700/40 to-transparent" />
+            <JumpPlanesCard aircraft={aircraft} />
+          </>
+        )}
         <div className="h-px bg-gradient-to-r from-transparent via-slate-700/40 to-transparent" />
         <WindsTable layers={layers} />
       </div>
