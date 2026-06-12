@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { TTLCache } from "@/lib/cache";
 import { prisma } from "@/lib/db";
 import { buildDropzoneConfig } from "@/lib/winds/config";
 import { computeJumpRun } from "@/lib/winds/jumprun";
@@ -18,8 +19,7 @@ const OPEN_METEO_PARAMS = [
 ].join(",");
 
 // Simple cache to avoid hammering Open-Meteo
-const cache = new Map<string, { data: unknown; ts: number }>();
-const CACHE_TTL = 15 * 60 * 1000;
+const cache = new TTLCache<ReturnType<typeof parseOpenMeteoWinds>>(15 * 60 * 1000);
 
 export async function GET(
   req: NextRequest,
@@ -34,14 +34,22 @@ export async function GET(
 
   // Fetch winds (with cache)
   const cacheKey = `${dz.lat},${dz.lon}`;
-  let layers;
-  const cached = cache.get(cacheKey);
+  let layers = cache.get(cacheKey);
 
-  if (cached && Date.now() - cached.ts < CACHE_TTL) {
-    layers = cached.data as ReturnType<typeof parseOpenMeteoWinds>;
-  } else {
+  if (!layers) {
     const url = `https://api.open-meteo.com/v1/gfs?latitude=${dz.lat}&longitude=${dz.lon}&hourly=${OPEN_METEO_PARAMS}&forecast_hours=24&wind_speed_unit=kmh`;
-    const res = await fetch(url, { cache: "no-store" });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "Wind data provider timed out" },
+        { status: 504 }
+      );
+    }
     if (!res.ok) {
       return NextResponse.json(
         { error: "Failed to fetch wind data" },
@@ -50,7 +58,7 @@ export async function GET(
     }
     const raw = await res.json();
     layers = parseOpenMeteoWinds(raw);
-    cache.set(cacheKey, { data: layers, ts: Date.now() });
+    cache.set(cacheKey, layers);
   }
 
   const config = buildDropzoneConfig(dz);

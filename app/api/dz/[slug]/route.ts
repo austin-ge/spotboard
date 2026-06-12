@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { parseLatLon } from "@/lib/geo";
 import { canEditDZ } from "@/lib/permissions";
 import { MAX_ZONES } from "@/lib/mapZones";
 import { NextRequest, NextResponse } from "next/server";
@@ -28,6 +29,19 @@ export async function PATCH(
   }
 
   const body = await req.json();
+
+  // Validate coordinates (PATCH may update lat/lon independently)
+  if (body.lat != null || body.lon != null) {
+    const coords = parseLatLon(body.lat ?? dz.lat, body.lon ?? dz.lon);
+    if (!coords) {
+      return NextResponse.json(
+        { error: "Latitude must be -90 to 90 and longitude -180 to 180" },
+        { status: 400 }
+      );
+    }
+    body.lat = body.lat != null ? coords.lat : undefined;
+    body.lon = body.lon != null ? coords.lon : undefined;
+  }
 
   // Validate headingMode
   if (body.headingMode && !HEADING_MODES.includes(body.headingMode)) {
@@ -87,14 +101,32 @@ export async function PATCH(
     }
   }
 
+  // Validate jump planes before any DB writes
+  if (body.jumpPlanes !== undefined) {
+    if (!Array.isArray(body.jumpPlanes)) {
+      return NextResponse.json({ error: "jumpPlanes must be an array" }, { status: 400 });
+    }
+    for (const plane of body.jumpPlanes) {
+      if (!plane.hexCode || typeof plane.hexCode !== "string") {
+        return NextResponse.json({ error: "Each plane needs a hexCode" }, { status: 400 });
+      }
+      if (!/^[0-9a-f]{6}$/i.test(plane.hexCode)) {
+        return NextResponse.json(
+          { error: `Invalid ICAO hex: ${plane.hexCode} (must be 6 hex characters)` },
+          { status: 400 }
+        );
+      }
+    }
+  }
+
   try {
     const updated = await prisma.dropzone.update({
       where: { slug },
       data: {
         // Basic
         ...(body.name && { name: body.name }),
-        ...(body.lat != null && { lat: parseFloat(body.lat) }),
-        ...(body.lon != null && { lon: parseFloat(body.lon) }),
+        ...(body.lat != null && { lat: body.lat }),
+        ...(body.lon != null && { lon: body.lon }),
         ...(body.airportCode !== undefined && { airportCode: body.airportCode || null }),
 
         // Jump profile
@@ -134,42 +166,28 @@ export async function PATCH(
       },
     });
 
-    // Sync jump planes if provided (replace all)
+    // Sync jump planes if provided (replace all atomically so concurrent
+    // ADS-B fetches never observe an empty plane list mid-sync)
     if (body.jumpPlanes !== undefined) {
-      if (!Array.isArray(body.jumpPlanes)) {
-        return NextResponse.json({ error: "jumpPlanes must be an array" }, { status: 400 });
-      }
-
-      // Validate each plane
-      for (const plane of body.jumpPlanes) {
-        if (!plane.hexCode || typeof plane.hexCode !== "string") {
-          return NextResponse.json({ error: "Each plane needs a hexCode" }, { status: 400 });
-        }
-        if (!/^[0-9a-f]{6}$/i.test(plane.hexCode)) {
-          return NextResponse.json(
-            { error: `Invalid ICAO hex: ${plane.hexCode} (must be 6 hex characters)` },
-            { status: 400 }
-          );
-        }
-      }
-
-      // Delete existing and recreate
-      await prisma.jumpPlane.deleteMany({ where: { dropzoneId: dz.id } });
-      if (body.jumpPlanes.length > 0) {
-        await prisma.jumpPlane.createMany({
-          data: body.jumpPlanes.map((p: { hexCode: string; tailNumber?: string }) => ({
-            dropzoneId: dz.id,
-            hexCode: p.hexCode.toLowerCase(),
-            tailNumber: p.tailNumber || null,
-          })),
-        });
-      }
+      await prisma.$transaction([
+        prisma.jumpPlane.deleteMany({ where: { dropzoneId: dz.id } }),
+        ...(body.jumpPlanes.length > 0
+          ? [
+              prisma.jumpPlane.createMany({
+                data: body.jumpPlanes.map((p: { hexCode: string; tailNumber?: string }) => ({
+                  dropzoneId: dz.id,
+                  hexCode: p.hexCode.toLowerCase(),
+                  tailNumber: p.tailNumber || null,
+                })),
+              }),
+            ]
+          : []),
+      ]);
     }
 
     return NextResponse.json({ slug: updated.slug });
   } catch (err) {
     console.error("Failed to update dropzone:", err);
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: `Failed to update: ${message}` }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update dropzone" }, { status: 500 });
   }
 }

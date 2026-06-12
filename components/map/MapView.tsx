@@ -510,7 +510,7 @@ export default function MapView({ lat, lon, jumpRun, jumpRunLengthMiles, mapZone
 
   if (!token) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-sm">
+      <div className="w-full h-full flex items-center justify-center bg-[#080c14] text-slate-500 text-sm">
         Set NEXT_PUBLIC_MAPBOX_TOKEN to enable map
       </div>
     );

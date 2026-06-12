@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { canEditDZ } from "@/lib/permissions";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -12,12 +13,11 @@ export async function GET(
   }
 
   const { slug } = await params;
-  const dz = await prisma.dropzone.findUnique({ where: { slug }, select: { id: true, ownerId: true } });
+  const dz = await prisma.dropzone.findUnique({ where: { slug }, select: { id: true } });
   if (!dz) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const isOwner = dz.ownerId === session.user.id;
-  const isAdmin = session.user.role === "ADMIN";
-  if (!isOwner && !isAdmin) {
+  const allowed = await canEditDZ(session.user, dz.id);
+  if (!allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -49,13 +49,12 @@ export async function POST(
   }
 
   const { slug } = await params;
-  const dz = await prisma.dropzone.findUnique({ where: { slug }, select: { id: true, ownerId: true } });
+  const dz = await prisma.dropzone.findUnique({ where: { slug }, select: { id: true } });
   if (!dz) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const isOwner = dz.ownerId === session.user.id;
-  const isAdmin = session.user.role === "ADMIN";
-  if (!isOwner && !isAdmin) {
-    return NextResponse.json({ error: "Only the DZ owner can invite team members" }, { status: 403 });
+  const allowed = await canEditDZ(session.user, dz.id);
+  if (!allowed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { email, role } = await req.json();

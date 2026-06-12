@@ -1,9 +1,10 @@
+import { TTLCache } from "@/lib/cache";
+import { parseLatLon } from "@/lib/geo";
 import { parseOpenMeteoWinds } from "@/lib/winds/parse";
 import { NextRequest, NextResponse } from "next/server";
 
 // Server-side cache: 15 min TTL
-const cache = new Map<string, { data: unknown; ts: number }>();
-const CACHE_TTL = 15 * 60 * 1000;
+const cache = new TTLCache<unknown>(15 * 60 * 1000);
 
 const OPEN_METEO_PARAMS = [
   "wind_speed_1000hPa",
@@ -20,25 +21,32 @@ const OPEN_METEO_PARAMS = [
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
-  const lat = searchParams.get("lat");
-  const lon = searchParams.get("lon");
+  const coords = parseLatLon(searchParams.get("lat"), searchParams.get("lon"));
 
-  if (!lat || !lon) {
+  if (!coords) {
     return NextResponse.json(
-      { error: "lat and lon query params required" },
+      { error: "Valid lat and lon query params required" },
       { status: 400 }
     );
   }
 
-  const cacheKey = `${lat},${lon}`;
+  const cacheKey = `${coords.lat},${coords.lon}`;
   const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.ts < CACHE_TTL) {
-    return NextResponse.json(cached.data);
+  if (cached) {
+    return NextResponse.json(cached);
   }
 
-  const url = `https://api.open-meteo.com/v1/gfs?latitude=${lat}&longitude=${lon}&hourly=${OPEN_METEO_PARAMS}&forecast_hours=24&wind_speed_unit=kmh`;
+  const url = `https://api.open-meteo.com/v1/gfs?latitude=${coords.lat}&longitude=${coords.lon}&hourly=${OPEN_METEO_PARAMS}&forecast_hours=24&wind_speed_unit=kmh`;
 
-  const res = await fetch(url);
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+  } catch {
+    return NextResponse.json(
+      { error: "Wind data provider timed out" },
+      { status: 504 }
+    );
+  }
   if (!res.ok) {
     return NextResponse.json(
       { error: "Failed to fetch wind data from Open-Meteo" },
@@ -52,11 +60,11 @@ export async function GET(req: NextRequest) {
   const data = {
     layers,
     fetchedAt: Date.now(),
-    lat: parseFloat(lat),
-    lon: parseFloat(lon),
+    lat: coords.lat,
+    lon: coords.lon,
   };
 
-  cache.set(cacheKey, { data, ts: Date.now() });
+  cache.set(cacheKey, data);
 
   return NextResponse.json(data);
 }

@@ -13,9 +13,11 @@ export default async function AdminPage() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-6">Admin Panel</h1>
-      <AdminPanel />
+    <main className="min-h-screen bg-[#080c14]">
+      <div className="max-w-5xl mx-auto p-8">
+        <h1 className="text-2xl font-bold tracking-tight text-white mb-6">Admin Panel</h1>
+        <AdminPanel />
+      </div>
     </main>
   );
 }

@@ -55,12 +55,12 @@ export default function ClaimForm({ matches }: { matches: Match[] }) {
 
   if (result && !result.approved) {
     return (
-      <div className="rounded-md bg-blue-50 p-4 text-sm text-blue-700">
+      <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-300">
         <p className="font-medium mb-1">Claim submitted for review</p>
         <p>An admin will review your claim. You&apos;ll be notified when it&apos;s approved.</p>
         <button
           onClick={() => router.push("/")}
-          className="mt-3 text-blue-600 hover:underline text-sm"
+          className="link-accent mt-3 text-sm font-medium"
         >
           Back to home
         </button>
@@ -70,17 +70,15 @@ export default function ClaimForm({ matches }: { matches: Match[] }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
-      )}
+      {error && <div className="error-banner">{error}</div>}
 
       {matches.map((m) => (
         <label
           key={m.id}
-          className={`flex items-center gap-3 rounded-md border p-3 cursor-pointer transition-colors ${
+          className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
             selected === m.id
-              ? "border-blue-600 bg-blue-50"
-              : "border-gray-200 hover:bg-gray-50"
+              ? "border-emerald-400/50 bg-emerald-400/10"
+              : "border-white/[0.08] hover:bg-white/[0.04]"
           }`}
         >
           <input
@@ -89,39 +87,31 @@ export default function ClaimForm({ matches }: { matches: Match[] }) {
             value={m.id}
             checked={selected === m.id}
             onChange={() => setSelected(m.id)}
-            className="text-blue-600"
+            className="accent-emerald-400"
           />
-          <span className="font-medium text-sm">{m.name}</span>
+          <span className="font-medium text-sm text-slate-200">{m.name}</span>
         </label>
       ))}
 
       <div>
-        <label className="block text-sm font-medium mb-2">I am a...</label>
+        <label className="block text-sm font-medium text-slate-300 mb-2">I am a...</label>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => setClaimType("OPERATOR")}
-            className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-              claimType === "OPERATOR"
-                ? "border-blue-600 bg-blue-50 text-blue-700"
-                : "border-gray-300 text-gray-600 hover:bg-gray-50"
-            }`}
+            className={`seg-btn flex-1 ${claimType === "OPERATOR" ? "seg-btn-active" : ""}`}
           >
             DZ Owner
           </button>
           <button
             type="button"
             onClick={() => setClaimType("STAFF")}
-            className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-              claimType === "STAFF"
-                ? "border-blue-600 bg-blue-50 text-blue-700"
-                : "border-gray-300 text-gray-600 hover:bg-gray-50"
-            }`}
+            className={`seg-btn flex-1 ${claimType === "STAFF" ? "seg-btn-active" : ""}`}
           >
             Staff
           </button>
         </div>
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-slate-500">
           {claimType === "OPERATOR"
             ? "Full control over this dropzone's board and settings."
             : "View access to the DZ dashboard."}
@@ -131,14 +121,14 @@ export default function ClaimForm({ matches }: { matches: Match[] }) {
       <button
         type="submit"
         disabled={loading || !selected}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="btn-primary w-full"
       >
         {loading ? "Submitting..." : "Claim Dropzone"}
       </button>
 
-      <p className="text-center text-sm text-gray-400">
+      <p className="text-center text-sm text-slate-500">
         Don&apos;t see your DZ?{" "}
-        <a href="mailto:austin@spotboard.xyz" className="text-blue-600 hover:underline">
+        <a href="mailto:austin@spotboard.xyz" className="link-accent">
           Contact us
         </a>
       </p>

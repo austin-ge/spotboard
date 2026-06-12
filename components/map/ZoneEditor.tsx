@@ -157,7 +157,7 @@ export default function ZoneEditor({ lat, lon, zones, onChange }: ZoneEditorProp
   return (
     <div>
       {!token ? (
-        <div className="w-full h-64 flex items-center justify-center bg-gray-100 text-gray-400 text-sm rounded-md">
+        <div className="w-full h-64 flex items-center justify-center bg-white/[0.03] border border-white/[0.06] text-slate-500 text-sm rounded-lg">
           Set NEXT_PUBLIC_MAPBOX_TOKEN to enable map
         </div>
       ) : (
@@ -171,7 +171,7 @@ export default function ZoneEditor({ lat, lon, zones, onChange }: ZoneEditorProp
               <button
                 type="button"
                 onClick={() => cycleColor(zone.id)}
-                className="w-6 h-6 rounded-full border border-gray-300 flex-shrink-0"
+                className="w-6 h-6 rounded-full border border-white/20 flex-shrink-0"
                 style={{ backgroundColor: zone.color }}
                 title="Click to change color"
               />
@@ -179,13 +179,13 @@ export default function ZoneEditor({ lat, lon, zones, onChange }: ZoneEditorProp
                 type="text"
                 value={zone.label}
                 onChange={(e) => updateLabel(zone.id, e.target.value)}
-                className="flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="input-dark flex-1 px-2 py-1"
                 placeholder="Zone label"
               />
               <button
                 type="button"
                 onClick={() => deleteZone(zone.id)}
-                className="text-red-400 hover:text-red-600 text-sm"
+                className="text-red-400/70 hover:text-red-400 text-sm transition-colors"
               >
                 ×
               </button>
@@ -194,7 +194,7 @@ export default function ZoneEditor({ lat, lon, zones, onChange }: ZoneEditorProp
         </div>
       )}
 
-      <p className="text-xs text-gray-400 mt-2">
+      <p className="text-xs text-slate-500 mt-2">
         Use the polygon tool to draw landing areas. Click a color swatch to cycle colors. Max {MAX_ZONES} zones.
       </p>
     </div>

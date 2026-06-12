@@ -59,12 +59,11 @@ interface SettingsFormProps {
   initialData: SettingsData;
 }
 
-const inputClass =
-  "w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+const inputClass = "input-dark";
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-sm font-semibold pt-4 pb-1 border-b border-gray-100 mb-3">
+    <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-400 pt-5 pb-1.5 border-b border-white/[0.06] mb-3">
       {children}
     </h3>
   );
@@ -142,15 +141,13 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
   return (
     <div className="space-y-8">
       <form onSubmit={handleSubmit} className="space-y-3">
-        {error && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
-        )}
+        {error && <div className="error-banner">{error}</div>}
 
         {/* 1. Basic Info */}
         <SectionHeader>Basic Info</SectionHeader>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Name</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
           <input
             type="text"
             value={data.name}
@@ -161,7 +158,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Latitude</label>
+            <label className="block text-xs text-slate-500 mb-1">Latitude</label>
             <input
               type="number"
               step="any"
@@ -171,7 +168,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Longitude</label>
+            <label className="block text-xs text-slate-500 mb-1">Longitude</label>
             <input
               type="number"
               step="any"
@@ -183,7 +180,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Airport Code</label>
+          <label className="block text-xs text-slate-500 mb-1">Airport Code</label>
           <input
             type="text"
             value={data.airportCode}
@@ -202,11 +199,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
               key={key}
               type="button"
               onClick={() => update("mapStyle", key)}
-              className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                data.mapStyle === key
-                  ? "border-blue-600 bg-blue-50 text-blue-700"
-                  : "border-gray-300 text-gray-600 hover:bg-gray-50"
-              }`}
+              className={`seg-btn ${data.mapStyle === key ? "seg-btn-active" : ""}`}
             >
               {MAP_STYLES[key].label}
             </button>
@@ -222,11 +215,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
               key={mode}
               type="button"
               onClick={() => update("headingMode", mode)}
-              className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                data.headingMode === mode
-                  ? "border-blue-600 bg-blue-50 text-blue-700"
-                  : "border-gray-300 text-gray-600 hover:bg-gray-50"
-              }`}
+              className={`seg-btn flex-1 ${data.headingMode === mode ? "seg-btn-active" : ""}`}
             >
               {mode === "AUTO" ? "Auto (Wind)" : mode === "RUNWAY" ? "Runway" : "Fixed"}
             </button>
@@ -236,7 +225,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
         {data.headingMode === "RUNWAY" && (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Runway Heading 1 (°)</label>
+              <label className="block text-xs text-slate-500 mb-1">Runway Heading 1 (°)</label>
               <input
                 type="number"
                 min={0}
@@ -248,7 +237,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Runway Heading 2 (°)</label>
+              <label className="block text-xs text-slate-500 mb-1">Runway Heading 2 (°)</label>
               <input
                 type="number"
                 min={0}
@@ -264,7 +253,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
 
         {data.headingMode === "FIXED" && (
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Fixed Heading (°)</label>
+            <label className="block text-xs text-slate-500 mb-1">Fixed Heading (°)</label>
             <input
               type="number"
               min={0}
@@ -277,7 +266,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
           </div>
         )}
 
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-slate-500">
           {data.headingMode === "AUTO" && "Heading calculated from speed-weighted wind average at 5k–14k ft."}
           {data.headingMode === "RUNWAY" && "Picks whichever runway heading is most into the wind."}
           {data.headingMode === "FIXED" && "Uses this exact heading regardless of wind direction."}
@@ -288,7 +277,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Exit Alt (ft)</label>
+            <label className="block text-xs text-slate-500 mb-1">Exit Alt (ft)</label>
             <input
               type="number"
               value={data.exitAltitudeFt}
@@ -297,7 +286,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Opening Alt (ft)</label>
+            <label className="block text-xs text-slate-500 mb-1">Opening Alt (ft)</label>
             <input
               type="number"
               value={data.openingAltitudeFt}
@@ -306,7 +295,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Holding Area (ft)</label>
+            <label className="block text-xs text-slate-500 mb-1">Holding Area (ft)</label>
             <input
               type="number"
               value={data.holdingAreaAltitudeFt}
@@ -315,7 +304,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Pattern Alt (ft)</label>
+            <label className="block text-xs text-slate-500 mb-1">Pattern Alt (ft)</label>
             <input
               type="number"
               value={data.patternAltitudeFt}
@@ -326,7 +315,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Jump Run Airspeed (kts)</label>
+          <label className="block text-xs text-slate-500 mb-1">Jump Run Airspeed (kts)</label>
           <input
             type="number"
             value={data.jumpRunAirspeedKnots}
@@ -337,13 +326,13 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
 
         {/* 4. Drift Parameters */}
         <SectionHeader>Drift Parameters</SectionHeader>
-        <p className="text-xs text-gray-400 -mt-2 mb-2">
+        <p className="text-xs text-slate-500 -mt-2 mb-2">
           Leave blank to use defaults (shown as placeholders).
         </p>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Canopy Forward Speed (mph)</label>
+            <label className="block text-xs text-slate-500 mb-1">Canopy Forward Speed (mph)</label>
             <input
               type="number"
               step="any"
@@ -354,7 +343,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Canopy Descent Rate (mph)</label>
+            <label className="block text-xs text-slate-500 mb-1">Canopy Descent Rate (mph)</label>
             <input
               type="number"
               step="any"
@@ -365,7 +354,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Freefall Terminal Vel (mph)</label>
+            <label className="block text-xs text-slate-500 mb-1">Freefall Terminal Vel (mph)</label>
             <input
               type="number"
               step="any"
@@ -376,7 +365,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Light-to-Door (mi)</label>
+            <label className="block text-xs text-slate-500 mb-1">Light-to-Door (mi)</label>
             <input
               type="number"
               step="any"
@@ -387,7 +376,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Airplane Drift (mi)</label>
+            <label className="block text-xs text-slate-500 mb-1">Airplane Drift (mi)</label>
             <input
               type="number"
               step="any"
@@ -398,7 +387,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Max Offset (mi)</label>
+            <label className="block text-xs text-slate-500 mb-1">Max Offset (mi)</label>
             <input
               type="number"
               step="any"
@@ -411,7 +400,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Jump Run Length (mi)</label>
+          <label className="block text-xs text-slate-500 mb-1">Jump Run Length (mi)</label>
           <input
             type="number"
             step="any"
@@ -427,7 +416,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Aircraft Name</label>
+            <label className="block text-xs text-slate-500 mb-1">Aircraft Name</label>
             <input
               type="text"
               value={data.aircraftName ?? ""}
@@ -437,7 +426,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Cruise Speed (kts)</label>
+            <label className="block text-xs text-slate-500 mb-1">Cruise Speed (kts)</label>
             <input
               type="number"
               value={data.aircraftCruiseSpeedKts ?? ""}
@@ -451,7 +440,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
         {/* 6. Separation Table */}
         <SectionHeader>Separation Table</SectionHeader>
 
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm text-slate-300">
           <input
             type="checkbox"
             checked={useCustomSep}
@@ -460,14 +449,14 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
               if (!e.target.checked) setSepTable([...SEPARATION_TABLE]);
               setSaved(false);
             }}
-            className="rounded border-gray-300"
+            className="rounded accent-emerald-400"
           />
           Use custom separation table
         </label>
 
         {useCustomSep && (
           <div className="space-y-2 mt-2">
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-xs text-gray-500 font-medium px-1">
+            <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-xs text-slate-500 font-medium px-1">
               <span>Ground Speed (kts)</span>
               <span>Separation (sec)</span>
               <span className="w-7" />
@@ -502,7 +491,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
                     setSepTable((t) => t.filter((_, j) => j !== i));
                     setSaved(false);
                   }}
-                  className="text-red-400 hover:text-red-600 text-sm w-7"
+                  className="text-red-400/70 hover:text-red-400 text-sm w-7 transition-colors"
                 >
                   ×
                 </button>
@@ -514,7 +503,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
                 setSepTable((t) => [...t, [0, 0]]);
                 setSaved(false);
               }}
-              className="text-sm text-blue-600 hover:text-blue-700"
+              className="link-accent text-sm font-medium"
             >
               + Add row
             </button>
@@ -523,14 +512,14 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
 
         {/* 7. Aircraft Tracking (ADS-B) */}
         <SectionHeader>Aircraft Tracking</SectionHeader>
-        <p className="text-xs text-gray-400 -mt-2 mb-2">
+        <p className="text-xs text-slate-500 -mt-2 mb-2">
           Register your jump planes for ADS-B tracking on the map.
           Enter a tail number and click Lookup to auto-fill the hex code.
         </p>
 
         <div className="space-y-2">
           {jumpPlanes.length > 0 && (
-            <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-2 text-xs text-gray-500 font-medium px-1">
+            <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-2 text-xs text-slate-500 font-medium px-1">
               <span>Tail Number</span>
               <span className="w-16" />
               <span>ICAO Hex Code</span>
@@ -577,7 +566,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
                   }
                 }}
                 id={`lookup-${i}`}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium w-16 text-center"
+                className="link-accent text-xs font-medium w-16 text-center"
               >
                 Lookup
               </button>
@@ -600,7 +589,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
                   setJumpPlanes((p) => p.filter((_, j) => j !== i));
                   setSaved(false);
                 }}
-                className="text-red-400 hover:text-red-600 text-sm w-7"
+                className="text-red-400/70 hover:text-red-400 text-sm w-7 transition-colors"
               >
                 ×
               </button>
@@ -612,7 +601,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
               setJumpPlanes((p) => [...p, { hexCode: "", tailNumber: "" }]);
               setSaved(false);
             }}
-            className="text-sm text-blue-600 hover:text-blue-700"
+            className="link-accent text-sm font-medium"
           >
             + Add aircraft
           </button>
@@ -620,7 +609,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
 
         {/* 8. Map Zones */}
         <SectionHeader>Map Zones</SectionHeader>
-        <p className="text-xs text-gray-400 -mt-2 mb-2">
+        <p className="text-xs text-slate-500 -mt-2 mb-2">
           Draw landing areas and points of interest on the map.
         </p>
 
@@ -635,11 +624,7 @@ export default function SettingsForm({ slug, isOwner, initialData }: SettingsFor
         />
 
         <div className="pt-4">
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
+          <button type="submit" disabled={saving} className="btn-primary w-full">
             {saving ? "Saving..." : saved ? "Saved!" : "Save Changes"}
           </button>
         </div>
@@ -737,16 +722,16 @@ function TeamSection({ slug }: { slug: string }) {
       {/* Current managers */}
       {managers.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs text-gray-500 font-medium mb-1">Managers</p>
+          <p className="text-xs text-slate-500 font-medium mb-1">Managers</p>
           {managers.map((m) => (
             <div key={m.id} className="flex items-center justify-between py-1.5">
-              <span className="text-sm">
+              <span className="text-sm text-slate-200">
                 {m.user.name || m.user.email}{" "}
-                <span className="text-xs text-gray-400">{m.user.email}</span>
+                <span className="text-xs text-slate-500">{m.user.email}</span>
               </span>
               <button
                 onClick={() => removeMember(m.id)}
-                className="text-xs text-red-500 hover:text-red-700"
+                className="text-xs text-red-400/70 hover:text-red-400 transition-colors"
               >
                 Remove
               </button>
@@ -758,16 +743,16 @@ function TeamSection({ slug }: { slug: string }) {
       {/* Current staff */}
       {staff.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs text-gray-500 font-medium mb-1">Staff</p>
+          <p className="text-xs text-slate-500 font-medium mb-1">Staff</p>
           {staff.map((s) => (
             <div key={s.id} className="flex items-center justify-between py-1.5">
-              <span className="text-sm">
+              <span className="text-sm text-slate-200">
                 {s.user.name || s.user.email}{" "}
-                <span className="text-xs text-gray-400">{s.user.email}</span>
+                <span className="text-xs text-slate-500">{s.user.email}</span>
               </span>
               <button
                 onClick={() => removeMember(s.id)}
-                className="text-xs text-red-500 hover:text-red-700"
+                className="text-xs text-red-400/70 hover:text-red-400 transition-colors"
               >
                 Remove
               </button>
@@ -779,16 +764,16 @@ function TeamSection({ slug }: { slug: string }) {
       {/* Pending invites */}
       {invites.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs text-gray-500 font-medium mb-1">Pending Invites</p>
+          <p className="text-xs text-slate-500 font-medium mb-1">Pending Invites</p>
           {invites.map((inv) => (
             <div key={inv.id} className="flex items-center justify-between py-1.5">
-              <span className="text-sm">
+              <span className="text-sm text-slate-200">
                 {inv.email || "Open link"}{" "}
-                <span className="text-xs text-gray-400">({inv.role})</span>
+                <span className="text-xs text-slate-500">({inv.role})</span>
               </span>
               <button
                 onClick={() => removeMember(inv.id)}
-                className="text-xs text-red-500 hover:text-red-700"
+                className="text-xs text-red-400/70 hover:text-red-400 transition-colors"
               >
                 Revoke
               </button>
@@ -799,30 +784,24 @@ function TeamSection({ slug }: { slug: string }) {
 
       {/* Invite form */}
       <form onSubmit={handleInvite} className="mt-3 space-y-2">
-        {inviteError && (
-          <div className="rounded-md bg-red-50 p-2 text-xs text-red-600">{inviteError}</div>
-        )}
+        {inviteError && <div className="error-banner text-xs">{inviteError}</div>}
         <div className="flex gap-2">
           <input
             type="email"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="Email address"
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="input-dark flex-1"
           />
           <select
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value as "MANAGER" | "STAFF")}
-            className="rounded-md border border-gray-300 px-2 py-2 text-sm"
+            className="input-dark w-auto"
           >
             <option value="MANAGER">Manager</option>
             <option value="STAFF">Staff</option>
           </select>
-          <button
-            type="submit"
-            disabled={inviteSending}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
+          <button type="submit" disabled={inviteSending} className="btn-primary">
             {inviteSending ? "..." : "Add"}
           </button>
         </div>
@@ -830,8 +809,8 @@ function TeamSection({ slug }: { slug: string }) {
 
       {/* Invite link */}
       {inviteLink && (
-        <div className="mt-2 rounded-md bg-green-50 p-3">
-          <p className="text-xs text-green-700 mb-1">
+        <div className="mt-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 p-3">
+          <p className="text-xs text-emerald-300 mb-1">
             User not found — share this invite link:
           </p>
           <div className="flex items-center gap-2">
@@ -839,11 +818,11 @@ function TeamSection({ slug }: { slug: string }) {
               type="text"
               readOnly
               value={inviteLink}
-              className="flex-1 rounded border border-green-200 bg-white px-2 py-1 text-xs font-mono"
+              className="input-dark flex-1 text-xs font-mono py-1"
             />
             <button
               onClick={() => navigator.clipboard.writeText(inviteLink)}
-              className="text-xs text-green-700 hover:text-green-800 font-medium"
+              className="link-accent text-xs font-medium"
             >
               Copy
             </button>

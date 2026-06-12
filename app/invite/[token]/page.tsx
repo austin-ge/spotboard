@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import AcceptInviteForm from "@/components/auth/AcceptInviteForm";
+import AuthShell from "@/components/layout/AuthShell";
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -22,51 +23,50 @@ export default async function InvitePage({ params }: Props) {
 
   if (!invite) {
     return (
-      <main className="flex min-h-screen items-center justify-center p-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Invalid Invite</h1>
-          <p className="text-gray-500">This invite link is not valid.</p>
-        </div>
-      </main>
+      <AuthShell title="Invalid Invite">
+        <p className="text-slate-400 text-sm">This invite link is not valid.</p>
+      </AuthShell>
     );
   }
 
   if (invite.used) {
     return (
-      <main className="flex min-h-screen items-center justify-center p-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Invite Already Used</h1>
-          <p className="text-gray-500">This invite has already been accepted.</p>
-        </div>
-      </main>
+      <AuthShell title="Invite Already Used">
+        <p className="text-slate-400 text-sm">This invite has already been accepted.</p>
+      </AuthShell>
     );
   }
 
   if (invite.expiresAt < new Date()) {
     return (
-      <main className="flex min-h-screen items-center justify-center p-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Invite Expired</h1>
-          <p className="text-gray-500">This invite link has expired. Ask the DZ owner for a new one.</p>
-        </div>
-      </main>
+      <AuthShell title="Invite Expired">
+        <p className="text-slate-400 text-sm">
+          This invite link has expired. Ask the DZ owner for a new one.
+        </p>
+      </AuthShell>
     );
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-8">
-      <div className="w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-1">Join {invite.dropzone.name}</h1>
-        <p className="text-sm text-gray-500 mb-6">
-          You&apos;ve been invited as a <span className="font-medium">{invite.role === "MANAGER" ? "Manager" : "Staff member"}</span>.
-        </p>
-        <AcceptInviteForm
-          token={token}
-          dzName={invite.dropzone.name}
-          dzSlug={invite.dropzone.slug}
-          role={invite.role}
-        />
-      </div>
-    </main>
+    <AuthShell
+      title={`Join ${invite.dropzone.name}`}
+      subtitle={
+        <>
+          You&apos;ve been invited as a{" "}
+          <span className="font-medium text-slate-300">
+            {invite.role === "MANAGER" ? "Manager" : "Staff member"}
+          </span>
+          .
+        </>
+      }
+      maxWidth="max-w-md"
+    >
+      <AcceptInviteForm
+        token={token}
+        dzName={invite.dropzone.name}
+        dzSlug={invite.dropzone.slug}
+        role={invite.role}
+      />
+    </AuthShell>
   );
 }

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { parseLatLon } from "@/lib/geo";
 import { generateSlug } from "@/lib/slug";
 import { NextResponse } from "next/server";
 
@@ -23,11 +24,19 @@ export async function POST(req: Request) {
     );
   }
 
+  const coords = parseLatLon(lat, lon);
+  if (!coords) {
+    return NextResponse.json(
+      { error: "Latitude must be -90 to 90 and longitude -180 to 180" },
+      { status: 400 }
+    );
+  }
+
   const slug = customSlug || generateSlug(name);
 
-  if (!/^[a-z0-9-]+$/.test(slug)) {
+  if (!/^[a-z0-9-]+$/.test(slug) || slug.length > 100) {
     return NextResponse.json(
-      { error: "Slug must contain only lowercase letters, numbers, and hyphens" },
+      { error: "Slug must be at most 100 lowercase letters, numbers, and hyphens" },
       { status: 400 }
     );
   }
@@ -44,8 +53,8 @@ export async function POST(req: Request) {
     data: {
       name,
       slug,
-      lat: parseFloat(lat),
-      lon: parseFloat(lon),
+      lat: coords.lat,
+      lon: coords.lon,
       airportCode: airportCode || null,
       ownerId: session.user.id,
     },

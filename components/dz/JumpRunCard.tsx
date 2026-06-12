@@ -15,7 +15,7 @@ export default function JumpRunCard({ jumpRun }: JumpRunCardProps) {
   if (!jumpRun) {
     return (
       <div className="py-8 text-center">
-        <div className="text-5xl font-mono font-bold text-slate-800 tabular-nums tracking-tight">
+        <div className="text-5xl font-mono font-bold text-slate-600 tabular-nums tracking-tight">
           ---&deg;
         </div>
         <p className="text-xs text-slate-600 mt-3">Waiting for wind data</p>

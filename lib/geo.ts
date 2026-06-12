@@ -2,6 +2,21 @@ const EARTH_RADIUS_METERS = 6371000;
 const EARTH_RADIUS_MILES = 3958.8;
 
 /**
+ * Parse a latitude/longitude pair and validate geographic bounds.
+ * Returns null if either value is missing, non-numeric, or out of range.
+ */
+export function parseLatLon(
+  lat: unknown,
+  lon: unknown
+): { lat: number; lon: number } | null {
+  const latNum = typeof lat === "number" ? lat : parseFloat(String(lat));
+  const lonNum = typeof lon === "number" ? lon : parseFloat(String(lon));
+  if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return null;
+  if (latNum < -90 || latNum > 90 || lonNum < -180 || lonNum > 180) return null;
+  return { lat: latNum, lon: lonNum };
+}
+
+/**
  * Calculate destination point given start, bearing, and distance in miles.
  * Uses haversine formula.
  */

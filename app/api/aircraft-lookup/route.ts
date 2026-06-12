@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(
       `https://api.adsbdb.com/v0/aircraft/${encodeURIComponent(reg)}`,
-      { cache: "force-cache" }
+      { cache: "force-cache", signal: AbortSignal.timeout(8_000) }
     );
 
     if (!res.ok) {

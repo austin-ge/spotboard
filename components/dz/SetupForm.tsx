@@ -59,51 +59,47 @@ export default function SetupForm() {
         {(["info", "location", "review"] as Step[]).map((s, i) => (
           <div
             key={s}
-            className={`h-1 flex-1 rounded-full transition-colors ${
+            className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
               (["info", "location", "review"] as Step[]).indexOf(step) >= i
-                ? "bg-blue-600"
-                : "bg-gray-200"
+                ? "bg-emerald-400"
+                : "bg-white/[0.08]"
             }`}
           />
         ))}
       </div>
 
-      {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <div className="error-banner">{error}</div>}
 
       {step === "info" && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Dropzone Info</h2>
+          <h2 className="text-lg font-semibold text-white">Dropzone Info</h2>
           <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               placeholder="Skydive Chicago"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="input-dark"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium text-slate-300 mb-1">
               URL Slug
             </label>
-            <div className="flex items-center gap-1 text-sm text-gray-500">
-              <span>spotboard.xyz/dz/</span>
+            <div className="flex items-center gap-1 text-sm text-slate-500">
+              <span className="font-mono text-xs">spotboard.xyz/dz/</span>
               <input
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="input-dark flex-1 font-mono"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Airport Code <span className="text-gray-400">(optional)</span>
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+              Airport Code <span className="text-slate-600">(optional)</span>
             </label>
             <input
               type="text"
@@ -111,13 +107,13 @@ export default function SetupForm() {
               onChange={(e) => setAirportCode(e.target.value.toUpperCase())}
               placeholder="KENW"
               maxLength={4}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="input-dark font-mono"
             />
           </div>
           <button
             onClick={() => setStep("location")}
             disabled={!name || !slug}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="btn-primary w-full"
           >
             Next
           </button>
@@ -126,14 +122,14 @@ export default function SetupForm() {
 
       {step === "location" && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Location</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-lg font-semibold text-white">Location</h2>
+          <p className="text-sm text-slate-500">
             Enter coordinates for your dropzone. You can find these on Google
             Maps by right-clicking your DZ.
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium text-slate-300 mb-1">
                 Latitude
               </label>
               <input
@@ -142,11 +138,11 @@ export default function SetupForm() {
                 value={lat}
                 onChange={(e) => setLat(e.target.value)}
                 placeholder="41.4535"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="input-dark font-mono tabular-nums"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium text-slate-300 mb-1">
                 Longitude
               </label>
               <input
@@ -155,21 +151,18 @@ export default function SetupForm() {
                 value={lon}
                 onChange={(e) => setLon(e.target.value)}
                 placeholder="-88.9400"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="input-dark font-mono tabular-nums"
               />
             </div>
           </div>
           <div className="flex gap-3">
-            <button
-              onClick={() => setStep("info")}
-              className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
-            >
+            <button onClick={() => setStep("info")} className="btn-ghost flex-1">
               Back
             </button>
             <button
               onClick={() => setStep("review")}
               disabled={!lat || !lon}
-              className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="btn-primary flex-1"
             >
               Next
             </button>
@@ -179,40 +172,37 @@ export default function SetupForm() {
 
       {step === "review" && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Review</h2>
-          <div className="rounded-md border border-gray-200 p-4 space-y-2 text-sm">
+          <h2 className="text-lg font-semibold text-white">Review</h2>
+          <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] p-4 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">Name</span>
-              <span className="font-medium">{name}</span>
+              <span className="text-slate-500">Name</span>
+              <span className="font-medium text-slate-200">{name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">URL</span>
-              <span className="font-mono text-xs">/dz/{slug}</span>
+              <span className="text-slate-500">URL</span>
+              <span className="font-mono text-xs text-slate-300">/dz/{slug}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Coordinates</span>
-              <span className="font-mono text-xs">
+              <span className="text-slate-500">Coordinates</span>
+              <span className="font-mono text-xs text-slate-300 tabular-nums">
                 {lat}, {lon}
               </span>
             </div>
             {airportCode && (
               <div className="flex justify-between">
-                <span className="text-gray-500">Airport</span>
-                <span>{airportCode}</span>
+                <span className="text-slate-500">Airport</span>
+                <span className="font-mono text-slate-200">{airportCode}</span>
               </div>
             )}
           </div>
           <div className="flex gap-3">
-            <button
-              onClick={() => setStep("location")}
-              className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
-            >
+            <button onClick={() => setStep("location")} className="btn-ghost flex-1">
               Back
             </button>
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="btn-primary flex-1"
             >
               {loading ? "Creating..." : "Create Dropzone"}
             </button>

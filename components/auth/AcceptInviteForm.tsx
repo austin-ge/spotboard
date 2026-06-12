@@ -34,32 +34,23 @@ export default function AcceptInviteForm({ token, dzName, dzSlug, role }: Props)
 
   return (
     <div className="space-y-4">
-      {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
-      )}
+      {error && <div className="error-banner">{error}</div>}
 
-      <div className="rounded-md border border-gray-200 p-4">
-        <p className="text-sm">
+      <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] p-4">
+        <p className="text-sm text-slate-300">
           You&apos;ll be able to{" "}
           {role === "MANAGER"
             ? "edit all settings for"
             : "view the dashboard of"}{" "}
-          <span className="font-medium">{dzName}</span>.
+          <span className="font-medium text-white">{dzName}</span>.
         </p>
       </div>
 
-      <button
-        onClick={handleAccept}
-        disabled={loading}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-      >
+      <button onClick={handleAccept} disabled={loading} className="btn-primary w-full">
         {loading ? "Accepting..." : "Accept Invite"}
       </button>
 
-      <button
-        onClick={() => router.push("/")}
-        className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-      >
+      <button onClick={() => router.push("/")} className="btn-ghost w-full">
         Decline
       </button>
     </div>

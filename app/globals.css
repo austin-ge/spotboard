@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafaf9;
-  --foreground: #1c1917;
+  --background: #080c14;
+  --foreground: #e2e8f0;
+  --accent: #34d399;
 }
 
 @theme inline {
@@ -50,4 +51,122 @@ body {
 }
 .led-glow {
   animation: led-glow 3s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------- */
+/* Shared dark-panel form vocabulary — keep auth, setup, settings,  */
+/* and admin surfaces visually identical to the DZ instrument panel */
+/* ---------------------------------------------------------------- */
+
+.input-dark {
+  width: 100%;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #e2e8f0;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+.input-dark::placeholder {
+  color: #475569;
+}
+.input-dark:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(52, 211, 153, 0.45);
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.25);
+}
+select.input-dark option {
+  background: #0c1018;
+  color: #e2e8f0;
+}
+
+.btn-primary {
+  border-radius: 0.5rem;
+  background: #10b981;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #04110b;
+  transition: background-color 150ms ease, transform 100ms ease;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #34d399;
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #94a3b8;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+.btn-ghost:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+}
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Segmented selector buttons (heading mode, map style, claim type…) */
+.seg-btn {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #94a3b8;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+.seg-btn:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+}
+.seg-btn-active {
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(52, 211, 153, 0.1);
+  color: #34d399;
+}
+.seg-btn-active:hover {
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(52, 211, 153, 0.12);
+}
+
+/* Translucent glass card on the dark backdrop */
+.panel-card {
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(4px);
+}
+
+.error-banner {
+  border-radius: 0.5rem;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: #f87171;
+}
+
+.link-accent {
+  color: #34d399;
+  transition: color 150ms ease;
+}
+.link-accent:hover {
+  color: #6ee7b7;
 }

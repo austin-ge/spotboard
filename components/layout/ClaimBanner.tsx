@@ -26,7 +26,7 @@ export default function ClaimBanner() {
   return (
     <Link
       href="/claim"
-      className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200 transition-colors"
+      className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-400/20 transition-colors"
     >
       Claim your DZ
     </Link>

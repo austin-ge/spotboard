@@ -34,6 +34,7 @@ export async function GET(
   try {
     const res = await fetch(`${READSB_URL}/data/aircraft.json`, {
       cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
     });
     if (!res.ok) {
       return NextResponse.json(

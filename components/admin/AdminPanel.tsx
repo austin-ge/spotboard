@@ -35,15 +35,15 @@ export default function AdminPanel() {
 
   return (
     <div>
-      <div className="flex gap-1 border-b border-gray-200 mb-6">
+      <div className="flex gap-1 border-b border-white/[0.08] mb-6">
         {(["dropzones", "claims", "users"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               tab === t
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-emerald-400 text-emerald-400"
+                : "border-transparent text-slate-500 hover:text-slate-300"
             }`}
           >
             {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -77,14 +77,14 @@ function DropzonesTab() {
     });
   }
 
-  if (loading) return <p className="text-sm text-gray-400">Loading...</p>;
+  if (loading) return <p className="text-sm text-slate-500">Loading...</p>;
 
   return (
     <div className="space-y-2">
       {dzs.map((dz) => (
         <DropzoneRow key={dz.id} dz={dz} onUpdateDomains={updateDomains} />
       ))}
-      {dzs.length === 0 && <p className="text-sm text-gray-400">No dropzones found.</p>}
+      {dzs.length === 0 && <p className="text-sm text-slate-500">No dropzones found.</p>}
     </div>
   );
 }
@@ -112,10 +112,10 @@ function DropzoneRow({
   }
 
   return (
-    <div className="flex items-center gap-4 rounded-md border border-gray-200 p-3">
+    <div className="flex items-center gap-4 rounded-lg border border-white/[0.06] bg-white/[0.03] p-3">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium truncate">{dz.name}</p>
-        <p className="text-xs text-gray-400">{dz.slug} &middot; {dz.owner.email}</p>
+        <p className="text-sm font-medium text-slate-200 truncate">{dz.name}</p>
+        <p className="text-xs text-slate-500">{dz.slug} &middot; {dz.owner.email}</p>
       </div>
       {editing ? (
         <div className="flex items-center gap-2">
@@ -124,30 +124,30 @@ function DropzoneRow({
             value={domainStr}
             onChange={(e) => setDomainStr(e.target.value)}
             placeholder="domain1.com, domain2.com"
-            className="rounded-md border border-gray-300 px-2 py-1 text-xs w-48"
+            className="input-dark w-48 px-2 py-1 text-xs"
           />
           <button
             onClick={save}
             disabled={saving}
-            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            className="link-accent text-xs font-medium"
           >
             {saving ? "..." : "Save"}
           </button>
           <button
             onClick={() => setEditing(false)}
-            className="text-xs text-gray-400 hover:text-gray-600"
+            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
           >
             Cancel
           </button>
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-slate-500">
             {dz.verifiedDomains.length > 0 ? dz.verifiedDomains.join(", ") : "No domains"}
           </span>
           <button
             onClick={() => setEditing(true)}
-            className="text-xs text-blue-600 hover:text-blue-700"
+            className="link-accent text-xs"
           >
             Edit
           </button>
@@ -177,40 +177,40 @@ function ClaimsTab() {
     setClaims((prev) => prev.filter((c) => c.id !== id));
   }
 
-  if (loading) return <p className="text-sm text-gray-400">Loading...</p>;
+  if (loading) return <p className="text-sm text-slate-500">Loading...</p>;
 
   return (
     <div className="space-y-2">
       {claims.map((c) => (
-        <div key={c.id} className="flex items-center gap-4 rounded-md border border-gray-200 p-3">
+        <div key={c.id} className="flex items-center gap-4 rounded-lg border border-white/[0.06] bg-white/[0.03] p-3">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">
+            <p className="text-sm font-medium text-slate-200">
               {c.user.name || c.user.email}{" "}
-              <span className="text-xs text-gray-400 font-normal">
+              <span className="text-xs text-slate-500 font-normal">
                 wants {c.claimType} of {c.dropzone.name}
               </span>
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-slate-500">
               Domain: {c.emailDomain} &middot; {new Date(c.createdAt).toLocaleDateString()}
             </p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => resolve(c.id, "APPROVED")}
-              className="rounded-md bg-green-50 px-3 py-1 text-xs font-medium text-green-700 hover:bg-green-100"
+              className="rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-400/20 transition-colors"
             >
               Approve
             </button>
             <button
               onClick={() => resolve(c.id, "REJECTED")}
-              className="rounded-md bg-red-50 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+              className="rounded-md border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-medium text-red-300 hover:bg-red-400/20 transition-colors"
             >
               Reject
             </button>
           </div>
         </div>
       ))}
-      {claims.length === 0 && <p className="text-sm text-gray-400">No pending claims.</p>}
+      {claims.length === 0 && <p className="text-sm text-slate-500">No pending claims.</p>}
     </div>
   );
 }
@@ -235,20 +235,20 @@ function UsersTab() {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
   }
 
-  if (loading) return <p className="text-sm text-gray-400">Loading...</p>;
+  if (loading) return <p className="text-sm text-slate-500">Loading...</p>;
 
   return (
     <div className="space-y-2">
       {users.map((u) => (
-        <div key={u.id} className="flex items-center gap-4 rounded-md border border-gray-200 p-3">
+        <div key={u.id} className="flex items-center gap-4 rounded-lg border border-white/[0.06] bg-white/[0.03] p-3">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">{u.name || u.email}</p>
-            <p className="text-xs text-gray-400">{u.email}</p>
+            <p className="text-sm font-medium text-slate-200">{u.name || u.email}</p>
+            <p className="text-xs text-slate-500">{u.email}</p>
           </div>
           <select
             value={u.role}
             onChange={(e) => changeRole(u.id, e.target.value)}
-            className="rounded-md border border-gray-300 px-2 py-1 text-xs"
+            className="input-dark w-auto px-2 py-1 text-xs"
           >
             <option value="JUMPER">JUMPER</option>
             <option value="STAFF">STAFF</option>
@@ -257,7 +257,7 @@ function UsersTab() {
           </select>
         </div>
       ))}
-      {users.length === 0 && <p className="text-sm text-gray-400">No users found.</p>}
+      {users.length === 0 && <p className="text-sm text-slate-500">No users found.</p>}
     </div>
   );
 }
