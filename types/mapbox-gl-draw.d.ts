@@ -24,10 +24,6 @@ declare module "@mapbox/mapbox-gl-draw" {
     };
   }
 
-  interface DrawEvent {
-    features: DrawFeature[];
-  }
-
   class MapboxDraw implements IControl {
     constructor(options?: DrawOptions);
     onAdd(map: Map): HTMLElement;

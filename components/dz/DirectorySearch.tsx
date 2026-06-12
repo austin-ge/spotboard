@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useCallback, useSyncExternalStore } from "react";
 import DropzoneCard from "./DropzoneCard";
 
 interface DZEntry {
@@ -15,18 +15,43 @@ interface DZEntry {
 
 const FAVORITES_KEY = "spotboard-favorites";
 
+// localStorage-backed favorites store, consumed via useSyncExternalStore.
+// The snapshot is cached by raw string value so getSnapshot stays referentially stable.
+const favoritesListeners = new Set<() => void>();
+const EMPTY_FAVORITES: Set<string> = new Set();
+let favoritesCacheRaw: string | null = null;
+let favoritesCache: Set<string> = new Set();
+
 function loadFavorites(): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    const raw = localStorage.getItem(FAVORITES_KEY);
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch {
-    return new Set();
+  const raw = localStorage.getItem(FAVORITES_KEY);
+  if (raw !== favoritesCacheRaw) {
+    favoritesCacheRaw = raw;
+    try {
+      favoritesCache = raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch {
+      favoritesCache = new Set();
+    }
   }
+  return favoritesCache;
+}
+
+function getServerFavorites(): Set<string> {
+  return EMPTY_FAVORITES;
+}
+
+function subscribeFavorites(callback: () => void) {
+  favoritesListeners.add(callback);
+  // Sync favorites across tabs as well.
+  window.addEventListener("storage", callback);
+  return () => {
+    favoritesListeners.delete(callback);
+    window.removeEventListener("storage", callback);
+  };
 }
 
 function saveFavorites(slugs: Set<string>) {
   localStorage.setItem(FAVORITES_KEY, JSON.stringify([...slugs]));
+  favoritesListeners.forEach((listener) => listener());
 }
 
 export default function DirectorySearch({
@@ -35,20 +60,17 @@ export default function DirectorySearch({
   dropzones: DZEntry[];
 }) {
   const [query, setQuery] = useState("");
-  const [favSlugs, setFavSlugs] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    setFavSlugs(loadFavorites());
-  }, []);
+  const favSlugs = useSyncExternalStore(
+    subscribeFavorites,
+    loadFavorites,
+    getServerFavorites
+  );
 
   const toggleFavorite = useCallback((slug: string) => {
-    setFavSlugs((prev) => {
-      const next = new Set(prev);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      saveFavorites(next);
-      return next;
-    });
+    const next = new Set(loadFavorites());
+    if (next.has(slug)) next.delete(slug);
+    else next.add(slug);
+    saveFavorites(next);
   }, []);
 
   const filtered = useMemo(() => {

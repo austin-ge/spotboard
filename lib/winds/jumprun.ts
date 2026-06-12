@@ -22,8 +22,7 @@ function windAt(layers: WindLayer[], altFt: number): WindLayer {
  * Smallest signed angle difference (−180 to +180)
  */
 function angleDiff(a: number, b: number): number {
-  let d = ((b - a + 540) % 360) - 180;
-  return d;
+  return ((b - a + 540) % 360) - 180;
 }
 
 /**

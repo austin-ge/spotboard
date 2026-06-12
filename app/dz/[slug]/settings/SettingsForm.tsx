@@ -663,15 +663,16 @@ function TeamSection({ slug }: { slug: string }) {
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
 
-  const loadTeam = useCallback(async () => {
-    const res = await fetch(`/api/dz/${slug}/invite`);
-    if (res.ok) {
-      const data = await res.json();
-      setManagers(data.managers);
-      setStaff(data.staff);
-      setInvites(data.invites);
-    }
-    setLoading(false);
+  const loadTeam = useCallback(() => {
+    fetch(`/api/dz/${slug}/invite`).then(async (res) => {
+      if (res.ok) {
+        const data = await res.json();
+        setManagers(data.managers);
+        setStaff(data.staff);
+        setInvites(data.invites);
+      }
+      setLoading(false);
+    });
   }, [slug]);
 
   useEffect(() => {

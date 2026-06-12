@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Plain CommonJS files run inside the Docker container without a TS runtime.
+    "prisma.config.production.js",
+    "prisma/seed.cjs",
   ]),
 ]);
 
