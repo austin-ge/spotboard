@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { WindsData } from "@/lib/winds/types";
 
 const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
@@ -36,13 +36,17 @@ export function useWinds(lat: number | null, lon: number | null) {
   const [winds, setWinds] = useState<WindsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Track whether we already have data without making fetchWinds depend on
+  // `winds` state (that caused an immediate refetch after every success).
+  const hasWindsRef = useRef(false);
 
   const fetchWinds = useCallback(async () => {
     if (lat == null || lon == null) return;
 
     // Try cache first
     const cached = getCached(lat, lon);
-    if (cached && !winds) {
+    if (cached && !hasWindsRef.current) {
+      hasWindsRef.current = true;
       setWinds(cached);
       setLoading(false);
     }
@@ -52,6 +56,7 @@ export function useWinds(lat: number | null, lon: number | null) {
       if (!res.ok) throw new Error("Failed to fetch winds");
 
       const data: WindsData = await res.json();
+      hasWindsRef.current = true;
       setWinds(data);
       setCache(data);
       setError(null);
@@ -61,7 +66,7 @@ export function useWinds(lat: number | null, lon: number | null) {
     } finally {
       setLoading(false);
     }
-  }, [lat, lon, winds]);
+  }, [lat, lon]);
 
   useEffect(() => {
     fetchWinds();

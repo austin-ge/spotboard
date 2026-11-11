@@ -30,6 +30,10 @@ export interface AircraftData {
   fetchedAt: number;
   /** Number of total aircraft seen by aggregator (before filtering) */
   totalSeen: number;
+  /** Timestamp (ms) of the readsb snapshot itself (not of this HTTP response) */
+  feedTimestamp: number | null;
+  /** Age of the readsb snapshot in seconds, or null if readsb gave no timestamp */
+  feedAgeSec: number | null;
 }
 
 /** Raw aircraft entry from readsb aircraft.json */

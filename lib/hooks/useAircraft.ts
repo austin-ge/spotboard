@@ -4,11 +4,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { AircraftData } from "@/lib/adsb/types";
 
 const POLL_INTERVAL = 3000; // 3 seconds
+/** Feed/last-success older than this means positions are not live */
+export const STALE_AFTER_SEC = 30;
 
 export function useAircraft(slug: string, enabled: boolean = true) {
   const [data, setData] = useState<AircraftData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastSuccessAt, setLastSuccessAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchAircraft = useCallback(async () => {
@@ -34,6 +38,7 @@ export function useAircraft(slug: string, enabled: boolean = true) {
 
       const json: AircraftData = await res.json();
       setData(json);
+      setLastSuccessAt(Date.now());
       setError(null);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
@@ -58,5 +63,27 @@ export function useAircraft(slug: string, enabled: boolean = true) {
     };
   }, [fetchAircraft, enabled]);
 
-  return { data, loading, error, refetch: fetchAircraft };
+  // Tick so staleness is re-evaluated even when requests keep failing
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 5000);
+    return () => clearInterval(t);
+  }, []);
+
+  const sinceSuccessSec =
+    lastSuccessAt === null ? null : Math.round((now - lastSuccessAt) / 1000);
+  const feedAgeSec = data?.feedAgeSec ?? null;
+  // Not live if: requests are failing, the feed snapshot is old, or we have
+  // not heard from the server for a while.
+  const stale =
+    enabled &&
+    !loading &&
+    (error !== null ||
+      (feedAgeSec !== null && feedAgeSec + (sinceSuccessSec ?? 0) > STALE_AFTER_SEC) ||
+      (sinceSuccessSec !== null && sinceSuccessSec > STALE_AFTER_SEC));
+  const ageSec =
+    feedAgeSec !== null && sinceSuccessSec !== null
+      ? feedAgeSec + sinceSuccessSec
+      : sinceSuccessSec;
+
+  return { data, loading, error, stale, ageSec, refetch: fetchAircraft };
 }

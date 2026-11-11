@@ -70,24 +70,49 @@ function interpolateWind(
 /**
  * Parse Open-Meteo GFS response into WindLayer[] at display altitudes (0-14k ft)
  */
+export class WindDataError extends Error {}
+
 export function parseOpenMeteoWinds(data: OpenMeteoResponse): WindLayer[] {
-  const { hourly } = data;
+  const hourly = data?.hourly;
+  if (!hourly || !Array.isArray(hourly.time) || hourly.time.length === 0) {
+    throw new WindDataError("Wind provider response is missing hourly data");
+  }
   const idx = findNearestTimeIndex(hourly.time);
 
-  // Extract winds at each pressure level
-  const pressureWinds = PRESSURE_LEVELS.map((level, i) => {
+  // Extract winds at each pressure level. A level with a missing/invalid
+  // value is skipped: it must NOT become a calm (0 kt / 0 deg) wind, because
+  // that value feeds the jump-run calculation.
+  const pressureWinds = PRESSURE_LEVELS.flatMap((level, i) => {
     const speedKey = `wind_speed_${level}hPa` as keyof OpenMeteoHourly;
     const dirKey = `wind_direction_${level}hPa` as keyof OpenMeteoHourly;
 
-    const speeds = hourly[speedKey] as number[] | undefined;
-    const dirs = hourly[dirKey] as number[] | undefined;
+    const speeds = hourly[speedKey] as (number | null)[] | undefined;
+    const dirs = hourly[dirKey] as (number | null)[] | undefined;
+    const speed = speeds?.[idx];
+    const dir = dirs?.[idx];
 
-    return {
-      altFt: PRESSURE_ALTITUDES_FT[i],
-      speedKts: speeds?.[idx] ? kphToKts(speeds[idx]) : 0,
-      dirDeg: dirs?.[idx] ?? 0,
-    };
+    if (
+      typeof speed !== "number" ||
+      !Number.isFinite(speed) ||
+      typeof dir !== "number" ||
+      !Number.isFinite(dir)
+    ) {
+      return [];
+    }
+    return [
+      {
+        altFt: PRESSURE_ALTITUDES_FT[i],
+        speedKts: kphToKts(speed),
+        dirDeg: dir,
+      },
+    ];
   });
+
+  if (pressureWinds.length < 3) {
+    throw new WindDataError(
+      `Wind provider returned too few valid pressure levels (${pressureWinds.length})`
+    );
+  }
 
   // Interpolate to display altitudes
   return DISPLAY_ALTITUDES_FT.map((altFt) => {

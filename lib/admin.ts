@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
-const BOOTSTRAP_EMAILS = ["austin@spotboard.xyz", "austin@skydivemidwest.com"];
+const BOOTSTRAP_EMAILS = ["austin@skydivemidwest.com"];
 
 export async function requireAdmin() {
   const session = await auth();

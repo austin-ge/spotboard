@@ -4,6 +4,17 @@ import type { AircraftPosition } from "@/lib/adsb/types";
 
 interface JumpPlanesCardProps {
   aircraft: AircraftPosition[] | undefined;
+  /** True when the ADS-B data is not live (feed offline, request failing, or snapshot old) */
+  stale?: boolean;
+  ageSec?: number | null;
+  error?: string | null;
+}
+
+function formatAge(sec: number | null | undefined): string {
+  if (sec == null) return "unknown";
+  if (sec < 90) return `${sec}s`;
+  const m = Math.round(sec / 60);
+  return m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${m % 60}m`;
 }
 
 function formatAlt(ft: number | null): string {
@@ -22,7 +33,12 @@ function formatVRate(fpm: number | null): string | null {
   return `${sign} ${Math.abs(Math.round(fpm)).toLocaleString()}`;
 }
 
-export default function JumpPlanesCard({ aircraft }: JumpPlanesCardProps) {
+export default function JumpPlanesCard({
+  aircraft,
+  stale = false,
+  ageSec,
+  error,
+}: JumpPlanesCardProps) {
   const jumpPlanes = (aircraft ?? []).filter((ac) => ac.isJumpPlane);
 
   return (
@@ -41,9 +57,21 @@ export default function JumpPlanesCard({ aircraft }: JumpPlanesCardProps) {
         )}
       </div>
 
+      {stale && (
+        <div
+          role="alert"
+          className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300"
+        >
+          {error ? "ADS-B feed offline" : "ADS-B data is not live"} — positions
+          below may be out of date (last update {formatAge(ageSec)} ago).
+        </div>
+      )}
+
       {jumpPlanes.length === 0 ? (
         <div className="rounded-lg bg-white/[0.02] border border-white/[0.04] py-4 text-center">
-          <p className="text-[11px] text-slate-600">No jump planes airborne</p>
+          <p className="text-[11px] text-slate-600">
+            {stale ? "Jump plane status unknown" : "No jump planes airborne"}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">

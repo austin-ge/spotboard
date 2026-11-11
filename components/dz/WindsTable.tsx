@@ -54,6 +54,9 @@ export default function WindsTable({ layers }: WindsTableProps) {
       <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
         Winds Aloft
       </h3>
+      <p className="text-[10px] text-slate-600 -mt-2">
+        GFS model forecast (not observed winds)
+      </p>
 
       <div className="space-y-0.5">
         {[...groups].reverse().map((g, i) => {

@@ -36,7 +36,12 @@ export default function DZPageClient({
   const [showMap, setShowMap] = useState(false);
   const { winds, loading, error } = useWinds(lat, lon);
   const jumpRun = useJumpRun(winds?.layers ?? null, config);
-  const { data: aircraftData } = useAircraft(slug, hasJumpPlanes);
+  const {
+    data: aircraftData,
+    stale: aircraftStale,
+    ageSec: aircraftAgeSec,
+    error: aircraftError,
+  } = useAircraft(slug, hasJumpPlanes);
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
@@ -58,6 +63,9 @@ export default function DZPageClient({
           error={error}
           showSettings={showSettings}
           aircraft={aircraftData?.aircraft}
+          aircraftStale={aircraftStale}
+          aircraftAgeSec={aircraftAgeSec}
+          aircraftError={aircraftError}
           hasJumpPlanes={hasJumpPlanes}
         />
       </div>

@@ -1,6 +1,6 @@
 import { TTLCache } from "@/lib/cache";
 import { parseLatLon } from "@/lib/geo";
-import { parseOpenMeteoWinds } from "@/lib/winds/parse";
+import { parseOpenMeteoWinds, WindDataError } from "@/lib/winds/parse";
 import { NextRequest, NextResponse } from "next/server";
 
 // Server-side cache: 15 min TTL
@@ -54,8 +54,17 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const raw = await res.json();
-  const layers = parseOpenMeteoWinds(raw);
+  let layers;
+  try {
+    const raw = await res.json();
+    layers = parseOpenMeteoWinds(raw);
+  } catch (err) {
+    const detail = err instanceof WindDataError ? err.message : "Invalid response";
+    return NextResponse.json(
+      { error: `Wind data unavailable: ${detail}` },
+      { status: 502 }
+    );
+  }
 
   const data = {
     layers,

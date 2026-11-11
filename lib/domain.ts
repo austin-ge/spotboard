@@ -9,7 +9,9 @@ const FREEMAIL_DOMAINS = new Set([
 ]);
 
 export function extractEmailDomain(email: string): string {
-  return email.split("@")[1]?.toLowerCase() ?? "";
+  // Use the LAST "@" so "a@good.com@evil.tld" resolves to "evil.tld".
+  const at = email.lastIndexOf("@");
+  return at === -1 ? "" : email.slice(at + 1).trim().toLowerCase();
 }
 
 export function isFreemailDomain(domain: string): boolean {

@@ -50,6 +50,25 @@ export async function GET(
     );
   }
 
+  // How old is the readsb snapshot itself? (`now` is epoch seconds.) The HTTP
+  // response being fresh says nothing about whether the receiver is still
+  // feeding data, so the client needs this to avoid showing frozen planes.
+  const feedTimestamp =
+    typeof readsbData.now === "number" && Number.isFinite(readsbData.now)
+      ? Math.round(readsbData.now * 1000)
+      : null;
+  const feedAgeSec =
+    feedTimestamp === null
+      ? null
+      : Math.max(0, Math.round((Date.now() - feedTimestamp) / 1000));
+
+  if (!Array.isArray(readsbData.aircraft)) {
+    return NextResponse.json(
+      { error: "ADS-B aggregator returned invalid data" },
+      { status: 502 }
+    );
+  }
+
   // Build hex → tailNumber lookup from registered planes
   const jumpPlaneMap = new Map(
     dz.jumpPlanes.map((p) => [p.hexCode.toLowerCase(), p.tailNumber])
@@ -58,6 +77,8 @@ export async function GET(
   // Filter to aircraft with valid positions
   const aircraft: AircraftPosition[] = readsbData.aircraft
     .filter((ac) => ac.lat != null && ac.lon != null)
+    // Position older than 2 minutes is not a live position
+    .filter((ac) => (ac.seen_pos ?? ac.seen ?? 0) <= 120)
     .map((ac) => {
       const hex = ac.hex.toLowerCase();
       const isJumpPlane = jumpPlaneMap.has(hex);
@@ -90,6 +111,8 @@ export async function GET(
     aircraft,
     fetchedAt: Date.now(),
     totalSeen: readsbData.aircraft.length,
+    feedTimestamp,
+    feedAgeSec,
   };
 
   return NextResponse.json(data);

@@ -20,6 +20,9 @@ interface SidebarProps {
   error: string | null;
   showSettings: boolean;
   aircraft: AircraftPosition[] | undefined;
+  aircraftStale?: boolean;
+  aircraftAgeSec?: number | null;
+  aircraftError?: string | null;
   hasJumpPlanes: boolean;
 }
 
@@ -35,6 +38,9 @@ export default function Sidebar({
   error,
   showSettings,
   aircraft,
+  aircraftStale,
+  aircraftAgeSec,
+  aircraftError,
   hasJumpPlanes,
 }: SidebarProps) {
   return (
@@ -87,7 +93,12 @@ export default function Sidebar({
         {hasJumpPlanes && (
           <>
             <div className="h-px bg-gradient-to-r from-transparent via-slate-700/40 to-transparent" />
-            <JumpPlanesCard aircraft={aircraft} />
+            <JumpPlanesCard
+              aircraft={aircraft}
+              stale={aircraftStale}
+              ageSec={aircraftAgeSec}
+              error={aircraftError}
+            />
           </>
         )}
         <div className="h-px bg-gradient-to-r from-transparent via-slate-700/40 to-transparent" />
