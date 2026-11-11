@@ -50,6 +50,8 @@ export function useAircraft(slug: string, enabled: boolean = true) {
 
   useEffect(() => {
     if (!enabled) {
+      // Intentional: reset state when polling is switched off
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setData(null);
       setLoading(false);
       return;

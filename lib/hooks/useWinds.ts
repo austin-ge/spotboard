@@ -69,6 +69,8 @@ export function useWinds(lat: number | null, lon: number | null) {
   }, [lat, lon]);
 
   useEffect(() => {
+    // Intentional: fetch on mount / when the location changes
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchWinds();
     const interval = setInterval(fetchWinds, REFRESH_INTERVAL);
     return () => clearInterval(interval);
